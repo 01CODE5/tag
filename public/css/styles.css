@@ -1,0 +1,369 @@
+:root{
+  --bg:#ffffff;
+  --text:#111827;
+  --muted:#6b7280;
+  --accent:#2563eb;
+  --container-width:1100px;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;color:var(--text);background:var(--bg);}
+.container{width:90%;max-width:var(--container-width);margin:0 auto;padding:2rem 0}
+.site-header{border-bottom:1px solid #e6e9ef;background:#fff}
+.header-inner{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.5rem 0}
+.brand{font-weight:700;color:var(--accent);text-decoration:none;font-size:1.125rem;display:flex;align-items:center;gap:.75rem}
+.brand-logo{height:44px;width:auto;display:inline-block}
+.brand-text{font-weight:700;color:var(--text)}
+.header-right{display:flex;align-items:center;gap:.5rem}
+.login-btn{border:1px solid #475569;background:transparent;color:#0f172a;padding:.45rem .75rem;border-radius:8px}
+.login-btn:hover{background:#f1f5f9}
+.nav-toggle{display:none;background:transparent;border:0;font-size:1.25rem}
+.site-nav ul{list-style:none;padding:0;margin:0;display:flex;gap:1rem}
+.site-nav a{text-decoration:none;color:var(--text);padding:.5rem .25rem}
+.site-nav a:focus,.site-nav a:hover{color:var(--accent)}
+
+.hero-large{padding:4.5rem 0;background:linear-gradient(135deg,#6fb1ff 0%,#bde6ff 60%, #f0f7ff 100%);text-align:center}
+.hero-inner{max-width:920px;margin:0 auto}
+.hero-title{font-size:2.25rem;color:#fff;margin:0 0 .5rem}
+.hero-sub{color:rgba(255,255,255,0.95);margin:0 0 1.2rem}
+.cta-btn{display:inline-flex;align-items:center;gap:.6rem;padding:.8rem 1.2rem;border-radius:14px;border:0;background:#ffffff;color:#0b66c3;font-weight:700;box-shadow:0 6px 14px rgba(11,102,195,0.16)}
+.cta-icon{background:#f3f4f6;padding:.35rem;border-radius:8px}
+.btn{display:inline-block;padding:.6rem 1rem;border-radius:6px;border:1px solid #d1d5db;background:#fff;text-decoration:none;color:var(--text)}
+.btn.primary{background:var(--accent);color:#fff;border-color:transparent}
+
+.features{padding:2.5rem 0}
+.cards-row{display:flex;gap:1rem;justify-content:space-between}
+.feature-card{flex:1;background:#fff;border-radius:10px;padding:1.2rem;box-shadow:0 8px 20px rgba(2,6,23,0.06);text-align:center}
+.feature-card.clickable{cursor:pointer;transition:transform .15s ease, box-shadow .15s ease}
+.feature-card.clickable:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(2,6,23,0.10)}
+.feature-card.clickable:focus-visible{outline:3px solid rgba(37,99,235,0.35);outline-offset:3px}
+.feature-icon{font-size:2rem;margin-bottom:.5rem}
+.feature-card h3{margin:.25rem 0}
+.feature-card p{color:var(--muted);font-size:.95rem}
+
+.announcements{padding:2rem 0}
+.announcement-list{display:flex;flex-direction:column;gap:1rem}
+.announcement{background:#fff;padding:1rem;border-radius:8px;border:1px solid #fde68a}
+.announcement h4{margin:0 0 .5rem}
+.announcement p{margin:0;color:var(--muted)}
+
+.site-footer{border-top:1px solid #e6e9ef;padding:1rem 0;text-align:center;color:var(--muted)}
+
+/* Responsive */
+@media (max-width:900px){
+  .cards-row{flex-direction:column}
+}
+@media (max-width:640px){
+  .nav-toggle{display:block}
+  .site-nav{position:absolute;left:0;right:0;top:64px;background:#fff;border-top:1px solid #e6e9ef;display:none}
+  .site-nav.open{display:block}
+  .site-nav ul{flex-direction:column;padding:1rem}
+  .hero-title{font-size:1.4rem}
+  .cta-btn{width:90%}
+}
+
+/* Form styles */
+.form-section{max-width:720px;padding:2rem 0}
+.form-section fieldset{border:1px solid #eef0f3;padding:1rem;border-radius:8px;margin-bottom:1rem}
+.form-section label{display:block;margin:0.5rem 0}
+.form-section input[type="text"],.form-section input[type="email"],.form-section input[type="password"],.form-section input[type="number"],.form-section input[type="tel"]{width:100%;padding:.5rem;border:1px solid #d1d5db;border-radius:6px}
+.form-actions{display:flex;gap:.75rem;align-items:center;margin-top:1rem}
+.muted{color:var(--muted);font-size:.95rem}
+.terms{max-width:900px;padding:2rem 0}
+
+/* Auth box in hero */
+.auth-box{border:1px solid #e6e9ef;background:#fff;padding:1rem;border-radius:10px;margin-top:1.25rem;display:inline-block}
+.auth-title{font-weight:700;margin:0 0 .5rem}
+.auth-buttons{display:flex;gap:.5rem}
+.auth-box .btn{padding:.45rem .75rem;font-size:.95rem}
+.auth-note{font-size:.85rem;margin-top:.5rem}
+
+@media (max-width:640px){
+  .auth-box{width:100%;box-sizing:border-box}
+  .auth-buttons{flex-direction:column}
+}
+
+/* Modal styles */
+.modal-overlay{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:none;align-items:center;justify-content:center;z-index:60}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:10px;max-width:720px;width:95%;padding:1rem 1.25rem;position:relative;box-shadow:0 10px 30px rgba(2,6,23,0.2)}
+.modal-close{position:absolute;right:10px;top:8px;border:0;background:transparent;font-size:1.1rem}
+.modal-header h2{margin:0 0 .5rem}
+.modal-body{max-height:70vh;overflow:auto;padding-bottom:1rem}
+.modal-form{margin:0}
+.modal-form h3{margin-top:0}
+.modal-form fieldset{border:1px solid #eef0f3;padding:0.75rem;border-radius:8px;margin-bottom:0.75rem}
+.modal-form label{display:block;margin:0.45rem 0}
+
+/* small layout tweaks for modal action buttons */
+.modal .form-actions{justify-content:flex-start}
+
+/* New visual styling to match requested design */
+.modal .modal-header{background:#1473d6;color:#fff;padding:.8rem 1rem;border-radius:8px 8px 0 0;margin:-1rem -1.25rem 0}
+.modal .modal-header h2{color:#fff;margin:0;font-size:1.25rem;text-align:center}
+
+/* Login modal specific tweaks to match provided design */
+#loginModal .modal{max-width:420px;width:96%;border-radius:12px;padding:0;overflow:hidden;box-sizing:border-box}
+#loginModal .modal-header{background:linear-gradient(180deg,#1473d6,#0b66c3);padding:1.05rem 1rem;border-radius:12px 12px 0 0;margin:0}
+#loginModal .modal-header h2{font-size:1.15rem;margin:0;color:#fff}
+#loginModal .modal-body{padding:1.25rem 1.25rem}
+#loginModal .modal-form{padding:0;margin:0}
+#loginModal .modal-form label{display:block;margin:.6rem 0;color:#111827}
+/* inputs use border box so padding + border don't overflow */
+#loginModal .modal-form input{width:100%;box-sizing:border-box;padding:.8rem 1rem;border-radius:10px;border:1px solid #e6e9ef;background:#f8fafc}
+#loginModal .modal-form input:focus{outline:none;box-shadow:0 6px 18px rgba(11,102,195,0.12);border-color:#0b66c3}
+#loginModal .modal-form .input-with-toggle{margin:0}
+#loginModal .modal-form .muted{font-size:.9rem;color:#6b7280}
+
+#loginModal .modal-form .btn.primary{display:flex;align-items:center;justify-content:center;gap:.6rem;width:100%;padding:1rem;border-radius:10px;border:0;background:linear-gradient(180deg,#2b8cf0,#0b66c3);color:#fff;font-weight:800;box-shadow:0 8px 20px rgba(11,102,195,0.18)}
+#loginModal .modal-form .btn.primary .icon{font-size:1rem;background:rgba(255,255,255,0.12);padding:.45rem;border-radius:8px}
+#loginModal .modal-form .btn.secondary{display:block;width:100%;padding:.85rem;border-radius:10px;background:#f3f4f6;border:0;color:#374151}
+
+/* ensure close button sits inside header and is visible */
+#loginModal .modal-close{position:absolute;right:12px;top:12px;color:#fff;background:transparent;border:0;font-size:1.05rem}
+
+/* Small spacing tweak for modal form fields */
+#loginModal .modal-form label > input{margin-top:.35rem}
+/* small icon inside primary button */
+#loginModal .modal-form .btn.primary .icon{display:inline-flex;align-items:center;justify-content:center}
+#loginModal .modal-form .btn.primary span{display:inline-block}
+
+/* inputs */
+.modal-form input[type="text"],.modal-form input[type="email"],.modal-form input[type="password"],.modal-form input[type="number"],.modal-form input[type="tel"]{
+  width:100%;padding:.75rem 1rem;border-radius:8px;border:0;background:#f3f4f6;box-shadow:none}
+.modal-form label{font-size:.95rem;color:#111827}
+.modal-form .muted{color:#6b7280}
+
+/* fieldset grid: two column layout for larger screens */
+.modal-form fieldset{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem}
+.modal-form label.full{grid-column:1 / -1}
+.modal-form label.half{grid-column:auto}
+
+/* input-with-toggle (eye icon) */
+.input-with-toggle{position:relative;display:flex;align-items:center}
+.input-with-toggle .toggle-pw{position:absolute;right:.5rem;border:0;background:transparent;font-size:1rem;padding:.25rem;cursor:pointer}
+.input-with-toggle input{padding-right:2.5rem}
+
+/* Big primary button like screenshot */
+.modal-form .btn.primary{display:block;width:100%;padding:1rem;border-radius:8px;font-weight:700;background:#0b66c3;color:#fff;border:0;box-shadow:0 6px 12px rgba(11,102,195,0.18)}
+.modal-form .btn{display:inline-block}
+
+/* Secondary back button */
+.modal-form .btn.secondary{display:block;width:100%;padding:.85rem;border-radius:8px;background:#f3f4f6;border:0;color:#111}
+
+/* center action area spacing */
+.modal-form .form-actions{display:flex;gap:.75rem;margin-top:1rem}
+.modal-form .form-actions .btn{flex:1}
+
+@media (max-width:640px){
+  .modal{width:96%;padding:.75rem}
+  .modal-form fieldset{grid-template-columns:1fr}
+  .modal-form .form-actions{flex-direction:column}
+}
+
+/* privacy modal specific tweaks */
+.privacy-body ul{margin:0 0 1rem 1.1rem}
+.privacy-actions{display:flex;flex-direction:column;gap:.5rem;margin-top:1rem}
+.privacy-actions .switch{display:flex;align-items:center;gap:.5rem}
+.switch input[type="checkbox"]{width:1.15rem;height:1.15rem}
+.privacy-body .muted{color:var(--muted)}
+
+
+/* If the logo file isn't present at the referenced path, the text will still show. */
+
+/* =============================
+   Admin (Landing + Login Modal)
+   ============================= */
+body.admin-page{background:#ffffff}
+body.admin-page .admin-landing{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:1.25rem 1rem}
+body.admin-page .admin-card{width:100%;max-width:420px;text-align:center;padding-top:1.25rem}
+body.admin-page .admin-logo-wrap{display:flex;align-items:center;justify-content:center;margin:1.35rem 0 .75rem}
+body.admin-page .admin-logo{width:98px;height:auto}
+body.admin-page .admin-title{margin:.25rem 0 0;font-size:1.25rem;font-weight:800;color:#111827}
+body.admin-page .admin-sub{margin:.25rem 0 1.1rem;color:#6b7280;font-size:.98rem}
+body.admin-page .admin-sub .down{display:inline-block;margin-right:.35rem;color:#111827}
+
+body.admin-page .admin-actions{display:flex;flex-direction:column;gap:.85rem;margin:1rem 0 1.15rem;align-items:center}
+body.admin-page .admin-action-btn{width:100%;max-width:340px;padding:1rem 1.1rem;border-radius:8px;border:0;font-weight:800;cursor:pointer}
+body.admin-page .admin-action-btn.residents{background:#b08a00;color:#fff;box-shadow:0 12px 24px rgba(176,138,0,.14)}
+body.admin-page .admin-action-btn.barangay{background:#1665d8;color:#fff;box-shadow:0 12px 24px rgba(22,101,216,.14)}
+
+body.admin-page .admin-footer{font-size:.92rem;color:#374151;line-height:1.35;max-width:360px;margin:0 auto}
+body.admin-page .admin-footer a{color:#1d4ed8;text-decoration:none}
+body.admin-page .admin-footer a:hover{text-decoration:underline}
+body.admin-page .admin-back{position:fixed;left:12px;top:12px;border:0;background:transparent;font-size:1.35rem;cursor:pointer;color:#111827}
+
+/* Admin login modal (Barangay) */
+body.admin-page #adminLoginModal.open{display:flex}
+body.admin-page #adminLoginModal .modal{max-width:520px;width:96%;padding:0;border-radius:14px;overflow:hidden;box-shadow:0 18px 50px rgba(2,6,23,.25)}
+body.admin-page #adminLoginModal .modal-close{position:absolute;right:14px;top:12px;color:#fff;background:transparent;border:0;font-size:1.1rem;cursor:pointer}
+body.admin-page #adminLoginModal .admin-login-header{background:linear-gradient(180deg,#1976d2 0%, #57a5ff 45%, #8bc34a 100%);color:#fff;padding:1.1rem 1.25rem 1.25rem;position:relative}
+body.admin-page #adminLoginModal .admin-login-header .logo{width:64px;height:auto;display:block;margin:0 auto .4rem}
+body.admin-page #adminLoginModal .admin-login-header h2{margin:.1rem 0 0;text-align:center;font-size:2rem;letter-spacing:.02em}
+body.admin-page #adminLoginModal .admin-login-header p{margin:.25rem 0 0;text-align:center;opacity:.95}
+body.admin-page #adminLoginModal .admin-login-body{background:#fff;padding:1.1rem 1.25rem 1.25rem}
+body.admin-page #adminLoginModal .admin-field{margin:.75rem 0;text-align:left}
+body.admin-page #adminLoginModal label{display:block;font-weight:700;color:#111827;margin-bottom:.35rem}
+body.admin-page #adminLoginModal input{width:100%;box-sizing:border-box;padding:.9rem 1rem;border-radius:12px;border:0;background:#eef2f7}
+body.admin-page #adminLoginModal input:focus{outline:none;box-shadow:0 8px 22px rgba(11,102,195,.14)}
+body.admin-page #adminLoginModal .admin-login-btn{width:100%;margin-top:.9rem;padding:1rem;border-radius:12px;border:0;background:#1976d2;color:#fff;font-weight:900;font-size:1.2rem;cursor:pointer}
+body.admin-page #adminLoginModal .admin-login-note{margin:.75rem 0 0;text-align:center;color:#6b7280;font-size:.92rem}
+
+/* =============================
+   Admin Barangay Dashboard
+   ============================= */
+body.admin-dashboard{background:#f5f7fb}
+.adm-layout{min-height:100vh;display:flex}
+
+/* Sidebar */
+.adm-sidebar{width:280px;background:#0b5267;color:#e6f3f7;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.adm-brand{display:flex;align-items:center;gap:.75rem;padding:1.1rem 1rem;border-bottom:1px solid rgba(255,255,255,.12)}
+.adm-brand img{width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.06);padding:.35rem}
+.adm-brand strong{display:block;line-height:1.1}
+.adm-brand small{display:block;opacity:.85;font-size:.78rem}
+
+.adm-nav{padding:.75rem 0;display:flex;flex-direction:column;gap:.2rem}
+.adm-nav a{display:flex;align-items:center;gap:.75rem;padding:.85rem 1rem;color:#e6f3f7;text-decoration:none;border-left:4px solid transparent}
+.adm-nav a:hover{background:rgba(255,255,255,.06)}
+.adm-nav a.active{background:rgba(255,255,255,.10);border-left-color:#ffffff}
+.adm-nav .ico{width:22px;display:inline-flex;align-items:center;justify-content:center;opacity:.95}
+
+.adm-sidebar-footer{margin-top:auto;padding:1rem}
+.adm-logout{display:flex;align-items:center;gap:.65rem;color:#e6f3f7;background:transparent;border:0;padding:.65rem .25rem;cursor:pointer;font-size:1rem}
+.adm-logout:hover{opacity:.9}
+
+/* Main */
+.adm-main{flex:1;min-width:0}
+.adm-topbar{height:64px;background:#6f8791;color:#0b1b22;display:flex;align-items:center;justify-content:flex-end;gap:1rem;padding:0 1.25rem;box-shadow:0 2px 10px rgba(2,6,23,.08)}
+.adm-topbar .role{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1}
+.adm-topbar .role strong{font-size:.9rem}
+.adm-topbar .role span{font-size:.8rem;opacity:.9}
+.adm-topbar .top-icons{display:flex;align-items:center;gap:.65rem}
+.adm-topbar .bubble{width:36px;height:36px;border-radius:999px;background:rgba(255,255,255,.25);display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.25)}
+
+.adm-content{padding:1.25rem}
+.adm-card{background:#fff;border-radius:12px;border:1px solid #e6e9ef;box-shadow:0 8px 18px rgba(2,6,23,.06)}
+
+.adm-title{margin:.1rem 0 .25rem;font-size:1.25rem;font-weight:900;color:#111827}
+.adm-subtitle{margin:0 0 1.1rem;color:#6b7280}
+
+.adm-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;margin:1rem 0 1.15rem}
+.stat{background:#fff;border-radius:12px;border:2px solid #e6e9ef;padding:.85rem 1rem;display:flex;align-items:center;justify-content:space-between}
+.stat .meta{display:flex;flex-direction:column;gap:.1rem}
+.stat .label{font-size:.9rem;color:#374151}
+.stat .value{font-size:1.4rem;font-weight:900;color:#111827}
+.stat .dot{width:22px;height:22px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:.85rem}
+.stat.pending{border-color:#f6c18a}
+.stat.pending .dot{background:#f59e0b;color:#fff}
+.stat.approved{border-color:#9be2b5}
+.stat.approved .dot{background:#16a34a;color:#fff}
+.stat.rejected{border-color:#f1a2aa}
+.stat.rejected .dot{background:#ef4444;color:#fff}
+.stat.total{border-color:#c7d2fe}
+.stat.total .dot{background:#2563eb;color:#fff}
+
+.adm-toolbar{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;margin-bottom:.75rem}
+.adm-toolbar .search{flex:1;min-width:240px;display:flex;align-items:center;gap:.5rem;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:10px;padding:.65rem .8rem}
+.adm-toolbar .search input{border:0;background:transparent;outline:none;flex:1}
+.adm-toolbar select{border:1px solid #e5e7eb;border-radius:10px;padding:.65rem .8rem;background:#fff}
+
+.adm-table-wrap{overflow:auto;border-radius:12px;border:1px solid #e6e9ef}
+.adm-table{width:100%;border-collapse:separate;border-spacing:0;min-width:760px}
+.adm-table thead th{position:sticky;top:0;background:#0b66c3;color:#fff;text-align:left;font-size:.85rem;padding:.85rem .9rem}
+.adm-table tbody td{background:#fff;padding:.75rem .9rem;border-top:1px solid #eef0f3;font-size:.92rem}
+.badge{display:inline-flex;align-items:center;gap:.35rem;padding:.25rem .6rem;border-radius:999px;font-weight:800;font-size:.75rem}
+.badge.approved{background:#dcfce7;color:#166534}
+.badge.pending{background:#fef3c7;color:#92400e}
+.badge.rejected{background:#fee2e2;color:#991b1b}
+
+.actions{display:flex;flex-wrap:wrap;gap:.45rem}
+.btn-mini{border:0;border-radius:8px;padding:.45rem .65rem;font-weight:800;font-size:.78rem;cursor:pointer;color:#fff}
+.btn-mini.view{background:#2563eb}
+.btn-mini.edit{background:#f59e0b}
+.btn-mini.qr{background:#7c3aed}
+.btn-mini.cert{background:#16a34a}
+.btn-mini.approve{background:#16a34a}
+.btn-mini.reject{background:#ef4444}
+
+@media (max-width:980px){
+  .adm-sidebar{width:240px}
+  .adm-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:720px){
+  .adm-layout{flex-direction:column}
+  .adm-sidebar{width:100%;height:auto;position:relative}
+  .adm-topbar{justify-content:space-between}
+}
+
+/* =============================
+   Certificate Management
+   ============================= */
+.cert-grid{display:grid;grid-template-columns:1.15fr 0.85fr;gap:1rem;align-items:start}
+.cert-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.75rem}
+.cert-head h2{margin:0;font-size:1.1rem;letter-spacing:.02em}
+.cert-head .hint{display:flex;align-items:center;gap:.55rem;background:#eef2f7;border:1px solid #e5e7eb;border-radius:10px;padding:.45rem .65rem;color:#374151;font-size:.82rem}
+.cert-head .hint .i{width:18px;height:18px;border-radius:999px;background:#9ca3af;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:.75rem}
+.cert-head .add-template{background:#fbbf24;border:0;color:#111827;font-weight:900;border-radius:10px;padding:.55rem .85rem;cursor:pointer}
+
+.cert-tabs{display:flex;gap:.5rem;background:#0b66c3;border-radius:999px;padding:.25rem}
+.cert-tab{flex:1;text-align:center;background:transparent;border:0;color:rgba(255,255,255,.9);padding:.4rem .6rem;border-radius:999px;font-weight:900;cursor:pointer;font-size:.85rem}
+.cert-tab.active{background:#ffffff;color:#0b66c3}
+
+.cert-panel{padding:1rem}
+.field{margin:.75rem 0}
+.field label{display:block;font-weight:900;font-size:.85rem;color:#111827;margin-bottom:.35rem}
+.field input,.field textarea{width:100%;box-sizing:border-box;border:0;background:#eef2f7;border-radius:10px;padding:.85rem .9rem;outline:none}
+.field textarea{min-height:90px;resize:vertical}
+
+.upload-box{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:12px;padding:1rem}
+.upload-box .title{font-weight:900;margin:0 0 .35rem}
+.upload-cta{display:flex;align-items:center;gap:.6rem;background:#fff;border:1px dashed #cbd5e1;border-radius:10px;padding:.75rem .85rem;cursor:pointer;color:#0b66c3;font-weight:900}
+.upload-cta small{display:block;color:#6b7280;font-weight:600}
+.upload-meta{color:#6b7280;font-size:.8rem;margin-top:.35rem}
+
+.preview-card{padding:1rem}
+.preview-title{display:flex;align-items:center;gap:.5rem;color:#374151;font-weight:900;font-size:.9rem;margin:0 0 .65rem}
+.preview-title .dot{width:8px;height:8px;border-radius:999px;background:#16a34a}
+.paper{background:#ffffff;border:2px solid #2b77d1;border-radius:12px;padding:1rem;min-height:520px;position:relative}
+.paper .seal{width:34px;height:34px;border-radius:10px;background:#e5e7eb;display:inline-flex;align-items:center;justify-content:center;margin:0 auto .35rem}
+.paper .center{text-align:center}
+.paper .tiny{font-size:.75rem;color:#6b7280}
+.paper h3{margin:.6rem 0 .25rem;font-size:1.05rem;letter-spacing:.06em}
+.paper .body{font-size:.82rem;color:#111827;line-height:1.45;margin-top:.65rem}
+.paper .sig{margin-top:1.35rem;display:flex;justify-content:space-between;align-items:flex-end;gap:1rem}
+.paper .sig .line{border-top:1px solid #cbd5e1;width:170px;margin-left:auto}
+.paper .qr{position:absolute;right:14px;bottom:14px;width:64px;height:64px;border-radius:10px;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-weight:900;color:#6b7280}
+.paper .footer-note{margin-top:1rem;font-size:.72rem;color:#6b7280;text-align:center}
+
+.cert-actions{display:flex;gap:.75rem;justify-content:flex-end;margin-top:.85rem}
+.btn-save{background:#16a34a;border:0;color:#fff;font-weight:900;border-radius:10px;padding:.7rem 1rem;cursor:pointer}
+.btn-reset{background:#fee2e2;border:0;color:#991b1b;font-weight:900;border-radius:10px;padding:.7rem 1rem;cursor:pointer}
+
+.tab-panels{margin-top:1rem}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}
+.field-grid .field{margin:0}
+.field-grid .span-2{grid-column:1 / -1}
+
+@media (max-width:720px){
+  .field-grid{grid-template-columns:1fr}
+  .field-grid .span-2{grid-column:auto}
+}
+
+@media (max-width:1100px){
+  .cert-grid{grid-template-columns:1fr}
+}
+
+/* =============================
+   Admin Settings
+   ============================= */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.settings-section{padding:1rem}
+.settings-section h3{margin:0 0 .25rem;font-size:1.05rem}
+.settings-section .muted{margin:0 0 .75rem}
+.settings-actions{display:flex;gap:.75rem;justify-content:flex-end;margin-top:1rem}
+.btn-secondary{background:#e5e7eb;border:0;color:#111827;font-weight:900;border-radius:10px;padding:.7rem 1rem;cursor:pointer}
+
+@media (max-width:1100px){
+  .settings-grid{grid-template-columns:1fr}
+}
