@@ -9,6 +9,131 @@ use Illuminate\Support\Facades\Hash;
 
 class OfficerController extends Controller
 {
+    public function login(Request $request)
+    {
+        $validated = $request->validate([
+            'login' => 'nullable|string|max:255',
+            'email' => 'nullable|string|max:255',
+            'password' => 'required|string',
+        ]);
+
+        $loginRaw = $validated['login'] ?? $validated['email'] ?? '';
+        $loginValue = strtolower(trim((string) $loginRaw));
+        if ($loginValue === '') {
+            return response()->json([
+                'message' => 'Please enter username or email.'
+            ], 422);
+        }
+
+        $officer = $this->resolveOfficerByLogin($loginValue);
+        if (!$officer) {
+            return response()->json([
+                'message' => 'Invalid credentials or account not found in the database.'
+            ], 401);
+        }
+
+        $passwordOk = $this->verifyOfficerPassword($officer, $validated['password']);
+
+        if (!$passwordOk) {
+            return response()->json([
+                'message' => 'Invalid credentials or account not found in the database.'
+            ], 401);
+        }
+
+        return response()->json([
+            'message' => 'Login successful',
+            'user' => [
+                'id' => $officer->id,
+                'fullname' => $officer->fullname,
+                'email' => $officer->email,
+                'username' => $officer->username,
+                'role' => $officer->role,
+            ],
+        ]);
+    }
+
+    public function loginAdmin(Request $request)
+    {
+        $validated = $request->validate([
+            'login' => 'nullable|string|max:255',
+            'email' => 'nullable|string|max:255',
+            'password' => 'required|string',
+        ]);
+
+        $loginRaw = $validated['login'] ?? $validated['email'] ?? '';
+        $loginValue = strtolower(trim((string) $loginRaw));
+        if ($loginValue === '') {
+            return response()->json([
+                'message' => 'Please enter username or email.'
+            ], 422);
+        }
+
+        $officer = $this->resolveOfficerByLogin($loginValue);
+        if (!$officer) {
+            return response()->json([
+                'message' => 'Invalid credentials or account not found in the database.'
+            ], 401);
+        }
+
+        if (strtolower((string) $officer->role) !== 'admin') {
+            return response()->json([
+                'message' => 'Access denied. Admin accounts only.'
+            ], 403);
+        }
+
+        $passwordOk = $this->verifyOfficerPassword($officer, $validated['password']);
+        if (!$passwordOk) {
+            return response()->json([
+                'message' => 'Invalid credentials or account not found in the database.'
+            ], 401);
+        }
+
+        $request->session()->regenerate();
+        $request->session()->put('admin_logged_in', true);
+        $request->session()->put('admin_role', 'admin');
+        $request->session()->put('admin_id', $officer->id);
+        $request->session()->put('admin_name', $officer->fullname);
+
+        return response()->json([
+            'message' => 'Admin login successful',
+            'user' => [
+                'id' => $officer->id,
+                'fullname' => $officer->fullname,
+                'email' => $officer->email,
+                'username' => $officer->username,
+                'role' => $officer->role,
+            ],
+        ]);
+    }
+
+    private function resolveOfficerByLogin(string $loginValue): ?BarangayOfficer
+    {
+        $isEmailLogin = filter_var($loginValue, FILTER_VALIDATE_EMAIL) !== false;
+
+        if ($isEmailLogin) {
+            $officer = BarangayOfficer::whereRaw('LOWER(email) = ?', [$loginValue])->first();
+            if ($officer) {
+                return $officer;
+            }
+        }
+
+        return BarangayOfficer::whereRaw('LOWER(username) = ?', [$loginValue])->first();
+    }
+
+    private function verifyOfficerPassword(BarangayOfficer $officer, string $password): bool
+    {
+        $passwordOk = Hash::check($password, $officer->password);
+
+        // Backward compatibility for old records that may still store plain text.
+        if (!$passwordOk && hash_equals((string) $officer->password, (string) $password)) {
+            $officer->password = Hash::make($password);
+            $officer->save();
+            $passwordOk = true;
+        }
+
+        return $passwordOk;
+    }
+
     public function index()
     {
         $officers = BarangayOfficer::query()

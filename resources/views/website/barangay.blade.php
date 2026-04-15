@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="csrf-token" content="{{ csrf_token() }}" />
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>High Admin - Create Official</title>
   <link rel="stylesheet" href="./styles.css" />
   <style>
@@ -67,7 +71,7 @@
   <div class="layout">
     <aside class="sidebar">
       <div class="brand">
-        <img src="./logo_zed.png" alt="DIGIBARANGAY" />
+        <img src="{{ asset('img/logo_zed.png') }}" alt="DIGIBARANGAY" />
         <div class="brand-text">
           <strong>DIGIBARANGAY</strong>
           <small>Smart Clearance System</small>
@@ -79,7 +83,7 @@
         <a href="/barangay" class="active" style="color:#fff"><span>👤</span><span>official Account</span></a>
       </nav>
 
-      <button class="logout-btn">
+      <button class="logout-btn" id="logoutBtn" type="button">
         <span>⎋</span><span>Logout</span>
       </button>
     </aside>
@@ -89,10 +93,6 @@
         <div class="topbar-title">
           <strong>CHAIRMAN</strong>
           <span>Barangay Administrator</span>
-        </div>
-        <div class="top-icons">
-          <span>👤</span>
-          <span>🔔</span>
         </div>
       </header>
 
@@ -126,7 +126,8 @@
 
             <label>Role</label>
             <select name="role">
-              <option value="admin" selected>Barangay Official (admin)</option>
+              <option value="admin" selected>Admin</option>
+              <option value="official">Official</option>
             </select>
 
             <button type="submit" class="create-btn">Create Account</button>
@@ -137,6 +138,31 @@
   </div>
 
   <script>
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+      try {
+        await fetch('/loginadmin/logout', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+      } catch (err) {
+        console.error('Logout error', err);
+      }
+
+      window.location.replace('/loginadmin');
+    });
+
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) {
+        window.location.reload();
+      }
+    });
+
     // Form submission - POST to backend
     document.getElementById('createForm').addEventListener('submit', async (e) => {
       e.preventDefault();

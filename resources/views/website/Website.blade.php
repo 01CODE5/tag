@@ -3,12 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Admin - DIGIBARANGAY</title>
+  <meta name="csrf-token" content="{{ csrf_token() }}" />
+  <title>Officer - DIGIBARANGAY</title>
   <link rel="stylesheet" href="{{asset('css/styles.css')}}" />
 </head>
 <body class="admin-page">
-  <button class="admin-back" type="button" aria-label="Back" id="adminBack">←</button>
-
   <main class="admin-landing">
     <div class="admin-card">
       <div class="admin-logo-wrap">
@@ -30,20 +29,21 @@
     </div>
   </main>
 
-  <!-- Admin Login Modal (shows when clicking Barangay) -->
+  <!-- Officer Login Modal (shows when clicking Barangay) -->
   <div id="adminLoginModal" class="modal-overlay" hidden>
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="adminLoginTitle">
       <button class="modal-close" id="adminLoginClose" aria-label="Close">✕</button>
       <div class="admin-login-header">
         <img src="{{ asset('img/logo_zed.png') }}" alt="DIGIBARANGAY logo" class="logo" />
-        <h2 id="adminLoginTitle">Admin</h2>
-        <p>Login to access the admin dashboard</p>
+        <h2 id="adminLoginTitle">Officer</h2>
+        <p>Login to access the officer dashboard</p>
       </div>
       <div class="admin-login-body">
-        <form id="adminLoginForm" novalidate>
+        <form action="{{ route('loginadmin.submit') }}" method="POST" id="adminLoginForm" novalidate>
+          @csrf
           <div class="admin-field">
-            <label for="adminEmail">Email Address</label>
-            <input id="adminEmail" name="email" type="email" placeholder="Enter your Email Address" required />
+            <label for="adminLogin">Email or Username</label>
+            <input id="adminLogin" name="login" type="text" placeholder="Enter your Email or Username" required />
           </div>
           <div class="admin-field">
             <label for="adminPassword">Password</label>
@@ -62,8 +62,8 @@
     function openModal(){
       modal.hidden = false;
       modal.classList.add('open');
-      const email = document.getElementById('adminEmail');
-      if(email) email.focus();
+      const login = document.getElementById('adminLogin');
+      if(login) login.focus();
     }
     function closeModal(){
       modal.classList.remove('open');
@@ -87,22 +87,39 @@
 
     document.getElementById('adminLoginForm').addEventListener('submit', (e) => {
       e.preventDefault();
-      const email = String(document.getElementById('adminEmail').value || '').trim();
+      const form = e.currentTarget;
+      const login = String(document.getElementById('adminLogin').value || '').trim();
       const password = String(document.getElementById('adminPassword').value || '').trim();
-      if(!email || !password){
+      const csrf = form.querySelector('input[name="_token"]')?.value || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+      if(!login || !password){
+        alert('Please enter username/email and password.');
         return;
       }
-      // Basic demo gate (can be replaced with real auth later)
-      localStorage.setItem('digibarangay_admin_logged_in', 'true');
-      localStorage.setItem('digibarangay_admin_email', email);
-      closeModal();
-      window.location.href = './admin-barangay.html';
+
+      fetch(form.action, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrf,
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ login, email: login, password })
+      })
+      .then(async (res) => {
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(body.message || 'Login failed.');
+        }
+        closeModal();
+        window.location.replace('/dashs');
+      })
+      .catch((err) => {
+        alert(err.message || 'Login failed.');
+      });
     });
 
-    document.getElementById('adminBack').addEventListener('click', () => {
-      // Since we're hiding Home for now, send back to admin itself.
-      window.location.href = './dash';
-    });
   </script>
 </body>
 </html>

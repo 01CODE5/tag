@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\RequestEmailMail;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 class AdminController extends Controller
 {
@@ -37,6 +40,38 @@ class AdminController extends Controller
 
     return response()->json(['message' => 'Created', 'user' => $user], 201);
 }
+
+    public function sendRequestEmail(Request $request)
+    {
+        if (session('admin_logged_in') !== true || session('admin_role') !== 'admin') {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $validated = $request->validate([
+            'recipient' => 'required|email',
+            'subject' => 'required|string|max:255',
+            'message' => 'required|string',
+            'ref' => 'nullable|string|max:100',
+            'name' => 'nullable|string|max:255',
+            'purpose' => 'nullable|string|max:255',
+            'reason' => 'nullable|string|max:255',
+            'date' => 'nullable|string|max:100',
+        ]);
+
+        try {
+            Mail::to($validated['recipient'])->send(new RequestEmailMail($validated));
+
+            return response()->json([
+                'message' => 'Email sent successfully.',
+            ]);
+        } catch (Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'message' => 'Unable to send email right now.',
+            ], 500);
+        }
+    }
 
     /**
      * Delete an admin user

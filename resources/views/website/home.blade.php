@@ -16,7 +16,7 @@
 				</a>
 			</div>
 			<div class="header-right">
-				<button class="btn login-btn" id="topLogin">Login</button>
+				<a class="btn login-btn" id="topLogin" href="{{ url('/login') }}">Login</a>
 			</div>
 		</div>
 	</header>
@@ -26,28 +26,28 @@
 			<div class="container hero-inner">
 				<h1 class="hero-title">Fast, Paperless and Secure</h1>
 				<p class="hero-sub">Request your barangay clearance online in minutes</p>
-				<button class="cta-btn" id="ctaRequest"><span class="cta-icon">📄</span> Request a certificate</button>
+				<a class="cta-btn" id="ctaRequest" href="{{ url('/login') }}"><span class="cta-icon">📄</span> Request a certificate</a>
 			</div>
 		</section>
 
 		<section id="features" class="features">
 			<div class="container">
 				<div class="cards-row">
-					<div class="feature-card">
+					<a class="feature-card clickable feature-link" href="{{ url('/login') }}">
 						<div class="feature-icon">📱</div>
 						<h3>Mobile-First</h3>
 						<p>Access from any device, optimized for smartphones.</p>
-					</div>
-					<div class="feature-card">
+					</a>
+					<a class="feature-card clickable feature-link" href="{{ url('/login') }}">
 						<div class="feature-icon">🔒</div>
 						<h3>Secure & verification</h3>
 						<p>Digital clearances with QR code authentication.</p>
-					</div>
-					<div class="feature-card">
+					</a>
+					<button class="feature-card clickable" id="realTimeStatusBtn" type="button" style="cursor:pointer;text-align:center;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;">
 						<div class="feature-icon">🔁</div>
-						<h3>Real-time status</h3>
+						<h3>Track Request</h3>
 						<p>Track your request status with instant notifications.</p>
-					</div>
+					</button>
 				</div>
 			</div>
 		</section>
@@ -139,58 +139,204 @@
 		</div>
 	</div>
 
-	    </div>
-		</div>
-		</div>
+	<!-- Register Modal (small box like login) -->
+	<div id="registerModal" class="modal-overlay" hidden>
+		<div class="modal" role="dialog" aria-modal="true" aria-labelledby="registerTitle">
+			<button class="modal-close" id="registerModalClose" aria-label="Close">✕</button>
+			<div class="modal-header"><h2 id="registerTitle">Create Resident Account</h2></div>
+			<div class="modal-body">
+				<form id="registerModalForm" class="modal-form" novalidate>
+					<fieldset>
+						<legend>Account Information</legend>
+						<label>Username (required)
+							<input name="username" type="text" required />
+						</label>
+						<label>Email address (required)
+							<input name="email" type="email" required />
+						</label>
+						<label>Password (min 6 characters)
+							<input name="password" type="password" minlength="6" required />
+						</label>
+						<label>Confirm password
+							<input name="passwordConfirm" type="password" minlength="6" required />
+						</label>
+					</fieldset>
 
-		<!-- Register Modal (small box like login) -->
-		<div id="registerModal" class="modal-overlay" hidden>
-			<div class="modal" role="dialog" aria-modal="true" aria-labelledby="registerTitle">
-				<button class="modal-close" id="registerModalClose" aria-label="Close">✕</button>
-				<div class="modal-header"><h2 id="registerTitle">Create Resident Account</h2></div>
-				<div class="modal-body">
-					<form id="registerModalForm" class="modal-form" novalidate>
-						<fieldset>
-							<legend>Account Information</legend>
-							<label>Username (required)
-								<input name="username" type="text" required />
-							</label>
-							<label>Email address (required)
-								<input name="email" type="email" required />
-							</label>
-							<label>Password (min 6 characters)
-								<input name="password" type="password" minlength="6" required />
-							</label>
-							<label>Confirm password
-								<input name="passwordConfirm" type="password" minlength="6" required />
-							</label>
-						</fieldset>
+					<fieldset>
+						<legend>Personal Information</legend>
+						<label>Full name (required)
+							<input name="fullname" type="text" required />
+						</label>
+						<label>Contact number (optional, format: 09XX-XXXX-XXXX)
+							<input name="contact" type="tel" pattern="^09\d{2}-\d{4}-\d{4}$" placeholder="09XX-XXXX-XXXX" />
+						</label>
+						<label>Age (required)
+							<input name="age" type="number" min="1" required />
+						</label>
+						<label>Complete address (example: House No., Street, Barangay 192)
+							<input name="address" type="text" required />
+						</label>
+					</fieldset>
 
-						<fieldset>
-							<legend>Personal Information</legend>
-							<label>Full name (required)
-								<input name="fullname" type="text" required />
-							</label>
-							<label>Contact number (optional, format: 09XX-XXXX-XXXX)
-								<input name="contact" type="tel" pattern="^09\d{2}-\d{4}-\d{4}$" placeholder="09XX-XXXX-XXXX" />
-							</label>
-							<label>Age (required)
-								<input name="age" type="number" min="1" required />
-							</label>
-							<label>Complete address (example: House No., Street, Barangay 192)
-								<input name="address" type="text" required />
-							</label>
-						</fieldset>
-
-						<div class="form-actions">
-							<button type="submit" class="btn primary">Register Account</button>
-							<button type="button" class="btn" id="registerBack">← BACK</button>
-						</div>
-					</form>
-				</div>
+					<div class="form-actions">
+						<button type="submit" class="btn primary">Register Account</button>
+						<button type="button" class="btn" id="registerBack">← BACK</button>
+					</div>
+				</form>
 			</div>
 		</div>
+	</div>
 
+	<div id="statusModal" class="modal-overlay" hidden>
+		<div class="modal" style="max-width:400px;">
+			<button class="modal-close" id="statusClose">✕</button>
+			<div class="modal-header">
+				<h2>Real-Time Status</h2>
+			</div>
+			<div class="modal-body" style="padding-top:16px;display:flex;flex-direction:column;align-items:center;gap:12px;">
+				<input type="text" id="statusInput" placeholder="Ilagay ang reference no. o pangalan..." style="width:92%;box-sizing:border-box;padding:12px 14px;margin-top:2px;border-radius:10px;border:1px solid #cbd5e1;outline:none;">
+				<button class="btn primary" id="statusSearchBtn" style="width:92%;">Search</button>
+				<p id="statusResult" style="text-align:center;font-weight:600;min-height:24px;margin-top:6px;"></p>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		const realTimeStatusBtn = document.getElementById('realTimeStatusBtn');
+		const statusModal = document.getElementById('statusModal');
+		const statusClose = document.getElementById('statusClose');
+		const statusSearchBtn = document.getElementById('statusSearchBtn');
+		const statusInput = document.getElementById('statusInput');
+		const statusResult = document.getElementById('statusResult');
+
+		function normalizeText(value) {
+			return String(value || '').trim().toLowerCase();
+		}
+
+		function certificateStatusLabel(statusRaw) {
+			const status = normalizeText(statusRaw);
+			if (status === 'approved') return { text: 'Tapos na ang certificate', color: 'green' };
+			if (status === 'rejected') return { text: 'Hindi naaprubahan ang certificate', color: 'red' };
+			if (status === 'pending') return { text: 'Ginagawa na ang certificate', color: 'orange' };
+			return { text: 'Hindi pa napoproseso ang certificate', color: 'orange' };
+		}
+
+		function getLocalRequestMatch(query) {
+			const raw = localStorage.getItem('digibarangay_requests');
+			let requests = [];
+			try {
+				requests = raw ? JSON.parse(raw) : [];
+			} catch {
+				requests = [];
+			}
+
+			if (!Array.isArray(requests) || requests.length === 0) return null;
+
+			const q = normalizeText(query);
+			const matches = requests.filter((item) => {
+				const ref = normalizeText(item.ref);
+				const name = normalizeText(item.name);
+				return ref.includes(q) || name.includes(q);
+			});
+
+			if (!matches.length) return null;
+
+			matches.sort((a, b) => String(b.dateRequested || '').localeCompare(String(a.dateRequested || '')));
+			return matches[0];
+		}
+
+		function openStatusModal() {
+			if (!statusModal) return;
+			statusModal.hidden = false;
+			statusModal.classList.add('open');
+			if (statusResult) {
+				statusResult.textContent = '';
+			}
+			if (statusInput) statusInput.focus();
+		}
+
+		function closeStatusModal() {
+			if (!statusModal) return;
+			statusModal.classList.remove('open');
+			statusModal.hidden = true;
+		}
+
+		if (realTimeStatusBtn && statusModal) {
+			realTimeStatusBtn.addEventListener('click', () => {
+				openStatusModal();
+			});
+		}
+
+		if (statusClose && statusModal) {
+			statusClose.addEventListener('click', () => {
+				closeStatusModal();
+			});
+		}
+
+		if (statusModal) {
+			statusModal.addEventListener('click', (event) => {
+				if (event.target === statusModal) {
+					closeStatusModal();
+				}
+			});
+		}
+
+		async function runStatusSearch() {
+				const input = String(statusInput?.value || '').trim();
+
+				if (!input) {
+					statusResult.textContent = 'Maglagay ng reference number o pangalan.';
+					statusResult.style.color = 'red';
+					return;
+				}
+
+				const localMatch = getLocalRequestMatch(input);
+				if (localMatch) {
+					const state = certificateStatusLabel(localMatch.status);
+					statusResult.innerHTML = 'Reference: ' + (localMatch.ref || '-') + '<br>Status: ' + state.text;
+					statusResult.style.color = state.color;
+					return;
+				}
+
+				statusResult.textContent = 'Checking...';
+				statusResult.style.color = '#334155';
+
+				try {
+					const response = await fetch('/api/status?ref=' + encodeURIComponent(input), {
+						headers: { 'Accept': 'application/json' }
+					});
+
+					if (response.ok) {
+						const payload = await response.json().catch(() => ({}));
+						const status = String(payload.status || payload.data?.status || '');
+						if (status) {
+							const state = certificateStatusLabel(status);
+							statusResult.textContent = 'Status: ' + state.text;
+							statusResult.style.color = state.color;
+							return;
+						}
+					}
+				} catch (error) {
+					// Keep graceful fallback below.
+				}
+
+				statusResult.textContent = 'Wala pang certificate na kapangalan.';
+				statusResult.style.color = 'orange';
+		}
+
+		if (statusSearchBtn) {
+			statusSearchBtn.addEventListener('click', runStatusSearch);
+		}
+
+		if (statusInput) {
+			statusInput.addEventListener('keydown', (event) => {
+				if (event.key === 'Enter') {
+					event.preventDefault();
+					runStatusSearch();
+				}
+			});
+		}
+	</script>
  
 </body>
 </html>

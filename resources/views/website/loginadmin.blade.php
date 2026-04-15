@@ -19,16 +19,15 @@
         </div>
 
         <div class="p-8">
-            <form action="{{ route('login') }}" method="POST" class="space-y-6">
-              
-                
+            <form id="adminLoginForm" action="{{ route('loginadmin.submit') }}" method="POST" class="space-y-6">
+              @csrf
                 <div>
-                    <label for="email" class="block text-gray-800 font-bold mb-2">Email Address</label>
+                    <label for="login" class="block text-gray-800 font-bold mb-2">Email or Username</label>
                     <input 
-                        type="email" 
-                        id="email" 
-                        name="email" 
-                        placeholder="Enter your Email Address" 
+                        type="text" 
+                        id="login" 
+                        name="login" 
+                        placeholder="Enter your Email or Username" 
                         class="w-full px-4 py-3 bg-[#f1f4f9] border-none rounded-xl focus:ring-2 focus:ring-blue-400 outline-none transition-all placeholder:text-gray-400 text-gray-700"
                         required
                     >
@@ -54,13 +53,46 @@
                 </button>
             </form>
 
-            <div class="mt-6 text-center">
-                <a href="/" class="text-sm text-gray-500 hover:text-blue-500 transition-colors">
-                    &larr; Back to Website
-                </a>
-            </div>
         </div>
     </div>
+
+        <script>
+            const adminLoginForm = document.getElementById('adminLoginForm');
+            adminLoginForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const login = String(adminLoginForm.login.value || '').trim();
+                const password = String(adminLoginForm.password.value || '').trim();
+                const csrf = adminLoginForm.querySelector('input[name="_token"]')?.value || '';
+
+                if (!login || !password) {
+                    alert('Please enter username/email and password.');
+                    return;
+                }
+
+                try {
+                    const res = await fetch(adminLoginForm.action, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrf,
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({ login, email: login, password })
+                    });
+
+                    const body = await res.json().catch(() => ({}));
+                    if (!res.ok) {
+                        alert(body.message || 'Login failed.');
+                        return;
+                    }
+
+                    window.location.replace('/dashboard');
+                } catch (err) {
+                    alert('Network error. Please try again.');
+                }
+            });
+        </script>
 
 </body>
 </html>

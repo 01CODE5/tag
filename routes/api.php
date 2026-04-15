@@ -11,6 +11,7 @@ Route::prefix('auth')->group(function () {
 });
 
 Route::get('/officers', [OfficerController::class, 'index']);
+Route::post('/officers/login', [OfficerController::class, 'login']);
 Route::post('/officers/register', [OfficerController::class, 'register']);
 
 Route::middleware('auth:sanctum')->group(function () {

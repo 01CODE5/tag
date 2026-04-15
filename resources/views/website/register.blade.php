@@ -89,9 +89,66 @@
           <a class="btn" href="./login">Back to Login</a>
         </div>
 
+        <p id="registerSuccess" class="muted" style="display:none;color:#166534;font-weight:600;">Account registered successfully. Redirecting to login...</p>
+        <p id="registerError" class="muted" style="display:none;color:#b91c1c;font-weight:600;"></p>
+
         <p class="muted">Before registering you must accept the <a href="./terms.html">Terms & Conditions</a>.</p>
       </form>
     </section>
   </main>
+
+  <script>
+    const registerForm = document.getElementById('registerForm');
+    const registerSuccess = document.getElementById('registerSuccess');
+    const registerError = document.getElementById('registerError');
+
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      registerSuccess.style.display = 'none';
+      registerError.style.display = 'none';
+
+      const submitBtn = registerForm.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Registering...';
+
+      try {
+        const csrf = registerForm.querySelector('input[name="_token"]')?.value || '';
+        const formData = new FormData(registerForm);
+
+        const res = await fetch(registerForm.action, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': csrf
+          },
+          body: formData
+        });
+
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          let msg = body.message || 'Registration failed.';
+          if (body.errors && typeof body.errors === 'object') {
+            msg = Object.values(body.errors).flat().join(' ');
+          }
+          registerError.textContent = msg;
+          registerError.style.display = 'block';
+          return;
+        }
+
+        registerSuccess.style.display = 'block';
+        registerForm.reset();
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 1200);
+      } catch (err) {
+        registerError.textContent = 'Network error. Please try again.';
+        registerError.style.display = 'block';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Register Account';
+      }
+    });
+  </script>
 </body>
 </html>

@@ -33,6 +33,7 @@ html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe 
 .features{padding:2.5rem 0}
 .cards-row{display:flex;gap:1rem;justify-content:space-between}
 .feature-card{flex:1;background:#fff;border-radius:10px;padding:1.2rem;box-shadow:0 8px 20px rgba(2,6,23,0.06);text-align:center}
+.feature-link{text-decoration:none;color:inherit;display:block}
 .feature-card.clickable{cursor:pointer;transition:transform .15s ease, box-shadow .15s ease}
 .feature-card.clickable:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(2,6,23,0.10)}
 .feature-card.clickable:focus-visible{outline:3px solid rgba(37,99,235,0.35);outline-offset:3px}
@@ -239,6 +240,11 @@ body.admin-dashboard{background:#f5f7fb}
 .adm-topbar .role span{font-size:.8rem;opacity:.9}
 .adm-topbar .top-icons{display:flex;align-items:center;gap:.65rem}
 .adm-topbar .bubble{width:36px;height:36px;border-radius:999px;background:rgba(255,255,255,.25);display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.25)}
+.adm-menu-toggle{display:none;align-items:center;justify-content:center;width:40px;height:40px;border:0;border-radius:10px;background:rgba(255,255,255,.25);color:#0b1b22;cursor:pointer}
+.adm-menu-toggle .bars{display:inline-flex;flex-direction:column;justify-content:center;gap:5px}
+.adm-menu-toggle .bars span{display:block;width:18px;height:2px;background:currentColor;border-radius:999px}
+
+.adm-sidebar-overlay{display:none}
 
 .adm-content{padding:1.25rem}
 .adm-card{background:#fff;border-radius:12px;border:1px solid #e6e9ef;box-shadow:0 8px 18px rgba(2,6,23,.06)}
@@ -275,23 +281,50 @@ body.admin-dashboard{background:#f5f7fb}
 .badge.pending{background:#fef3c7;color:#92400e}
 .badge.rejected{background:#fee2e2;color:#991b1b}
 
-.actions{display:flex;flex-wrap:wrap;gap:.45rem}
+.actions{display:flex;align-items:center;gap:.45rem;flex-wrap:nowrap}
 .btn-mini{border:0;border-radius:8px;padding:.45rem .65rem;font-weight:800;font-size:.78rem;cursor:pointer;color:#fff}
 .btn-mini.view{background:#2563eb}
 .btn-mini.edit{background:#f59e0b}
 .btn-mini.qr{background:#7c3aed}
+.btn-mini.email{background:#0ea5e9}
 .btn-mini.cert{background:#16a34a}
 .btn-mini.approve{background:#16a34a}
 .btn-mini.reject{background:#ef4444}
+.btn-mini.delete{background:#b91c1c;color:#fff;}
 
 @media (max-width:980px){
   .adm-sidebar{width:240px}
   .adm-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:720px){
-  .adm-layout{flex-direction:column}
-  .adm-sidebar{width:100%;height:auto;position:relative}
-  .adm-topbar{justify-content:space-between}
+  .adm-layout{display:block}
+  .adm-main{width:100%}
+  .adm-topbar{justify-content:space-between;position:sticky;top:0;z-index:45}
+  .adm-menu-toggle{display:inline-flex}
+
+  .adm-sidebar{
+    width:min(84vw,320px);
+    position:fixed;
+    left:0;
+    top:0;
+    bottom:0;
+    height:100vh;
+    z-index:60;
+    transform:translateX(-105%);
+    transition:transform .22s ease;
+    box-shadow:0 14px 36px rgba(2,6,23,.24);
+  }
+
+  body.adm-menu-open .adm-sidebar{transform:translateX(0)}
+
+  .adm-sidebar-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(2,6,23,.45);
+    z-index:55;
+  }
+
+  body.adm-menu-open .adm-sidebar-overlay{display:block}
 }
 
 /* =============================
@@ -330,8 +363,11 @@ body.admin-dashboard{background:#f5f7fb}
 .paper h3{margin:.6rem 0 .25rem;font-size:1.05rem;letter-spacing:.06em}
 .paper .body{font-size:.82rem;color:#111827;line-height:1.45;margin-top:.65rem}
 .paper .sig{margin-top:1.35rem;display:flex;justify-content:space-between;align-items:flex-end;gap:1rem}
+.paper .sig-signatory{display:flex;flex-direction:column;align-items:flex-end}
+.paper .sig-signature{display:block;width:140px;max-height:56px;object-fit:contain;transform:translateY(-8px);margin-bottom:-2px}
 .paper .sig .line{border-top:1px solid #cbd5e1;width:170px;margin-left:auto}
 .paper .qr{position:absolute;right:14px;bottom:14px;width:64px;height:64px;border-radius:10px;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-weight:900;color:#6b7280}
+.paper .email-note{position:absolute;right:14px;bottom:18px;max-width:52%;text-align:right;color:#4b5563;font-size:.7rem;line-height:1.25}
 .paper .footer-note{margin-top:1rem;font-size:.72rem;color:#6b7280;text-align:center}
 
 .cert-actions{display:flex;gap:.75rem;justify-content:flex-end;margin-top:.85rem}
