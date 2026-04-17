@@ -15,7 +15,7 @@
       min-height:1123px;
       max-width:100%;
       margin:0 auto;
-      padding:70px 72px 82px;
+      padding:70px 72px 118px;
       background:#fff;
       border:1px solid #d7dde5;
       box-shadow:0 12px 28px rgba(2,6,23,.10);
@@ -23,6 +23,24 @@
       overflow:hidden;
       font-family:"Times New Roman", Times, serif;
       color:#111827;
+    }
+
+    .paper::before{
+      content:'';
+      position:absolute;
+      left:50%;
+      top:54%;
+      width:430px;
+      height:430px;
+      transform:translate(-50%, -50%);
+      background-image:url('{{ asset('img/Barangay Official Logo.png') }}');
+      background-repeat:no-repeat;
+      background-position:center;
+      background-size:contain;
+      opacity:.12;
+      filter:grayscale(100%) blur(1.8px);
+      pointer-events:none;
+      z-index:1;
     }
 
     .paper .center{
@@ -36,11 +54,12 @@
     }
 
     .paper .cert-header-image{
+      center;
       display:block;
       width:100%;
-      max-width:640px;
+      max-width:750px;
       margin:0 auto;
-      height:auto;
+      height:150%;
       object-fit:contain;
     }
 
@@ -81,6 +100,7 @@
 
     .paper .sig{
       margin-top:72px;
+      margin-bottom:64px;
       display:flex;
       justify-content:space-between;
       align-items:flex-end;
@@ -113,9 +133,10 @@
       position:absolute;
       left:72px;
       right:72px;
-      bottom:34px;
+      bottom:18px;
       text-align:left;
       font-size:11px;
+      line-height:1.35;
       color:#111827;
       letter-spacing:.02em;
     }
@@ -123,7 +144,7 @@
     .paper .email-note{
       position:absolute;
       right:72px;
-      bottom:34px;
+      bottom:44px;
       max-width:42%;
       text-align:right;
       font-size:11px;
@@ -163,6 +184,7 @@
 
       .paper .sig{
         margin-top:56px;
+        margin-bottom:36px;
       }
     }
 
@@ -193,6 +215,89 @@
     #templateLibraryList .adm-table td {
       white-space: normal;
       word-break: break-word;
+    }
+
+    .preview-head {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:.75rem;
+      margin-bottom:.6rem;
+    }
+
+    .preview-view-btn {
+      border:1px solid #2b77d1;
+      background:#fff;
+      color:#2b77d1;
+      border-radius:8px;
+      padding:.42rem .72rem;
+      font-size:.82rem;
+      font-weight:700;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+
+    .preview-view-btn:hover {
+      background:#eef5ff;
+    }
+
+    #pdfPreviewModal .modal {
+      width:min(99vw, 1380px);
+      max-width:1380px;
+      max-height:95vh;
+      overflow:hidden;
+      padding:0;
+      display:flex;
+      flex-direction:column;
+    }
+
+    #pdfPreviewModal .modal-header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:.75rem;
+      padding:.9rem 1rem;
+      border-bottom:1px solid #e5e7eb;
+      background:#fff;
+    }
+
+    #pdfPreviewModal .modal-body {
+      padding:.75rem;
+      background:#f3f4f6;
+      overflow:auto;
+    }
+
+    #pdfPreviewMount {
+      min-height:0;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      padding:.5rem 1rem .75rem;
+    }
+
+    #pdfPreviewMount .paper {
+      width:794px;
+      max-width:794px;
+      min-width:794px;
+      margin:0;
+      zoom:1.04;
+      transform-origin:top center;
+      box-shadow:0 10px 24px rgba(2,6,23,.15);
+    }
+
+    @media (max-width:1200px){
+      #pdfPreviewMount .paper {
+        zoom:1.05;
+      }
+    }
+
+    @media (max-width:860px){
+      #pdfPreviewMount .paper {
+        zoom:1;
+        min-width:unset;
+        width:100%;
+        max-width:100%;
+      }
     }
   </style>
   </head>
@@ -340,7 +445,10 @@
             </section>
 
             <aside class="adm-card preview-card">
-              <div class="preview-title"><span class="dot"></span><span>Live Preview</span></div>
+              <div class="preview-head">
+                <div class="preview-title"><span class="dot"></span><span>Live Preview</span></div>
+                <button class="preview-view-btn" type="button" id="viewPdfBtn">👁 View PDF Format</button>
+              </div>
               <div class="paper" id="paper" style="border-color: var(--certBorder, #2b77d1)">
                 <div class="cert-header-image-wrap">
                   <img id="pvHeaderImage" class="cert-header-image" alt="Certificate header" src="{{ asset('img/Screenshot 2026-04-15 162812.jpg') }}" />
@@ -358,8 +466,7 @@
                     <div class="tiny" id="pvSignTitle">Punong Barangay</div>
                   </div>
                 </div>
-
-                <div class="email-note tiny" id="pvEmail">For verification, email: (Optional)</div>
+                <div class="email-note" id="pvEmailNote"></div>
                 <div class="footer-note">This is a digitally issued certificate. The issuance is effective without official seal and signature.</div>
               </div>
             </aside>
@@ -402,15 +509,48 @@
   </div>
 </div>
 
+<div id="pdfPreviewModal" class="modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pdfPreviewTitle">
+    <div class="modal-header">
+      <h2 id="pdfPreviewTitle" style="margin:0">PDF Format Preview</h2>
+      <div style="display:flex;gap:.5rem;align-items:center;">
+        <button class="btn primary" type="button" id="pdfPrintBtn">Save PDF</button>
+        <button class="btn" type="button" id="pdfPreviewCloseBtn">Close</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div id="pdfPreviewMount"></div>
+    </div>
+  </div>
+</div>
+
+<div id="statusModal" class="modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="statusModalTitle" style="max-width:420px;">
+    <button class="modal-close" id="statusModalClose" aria-label="Close">✕</button>
+    <div class="modal-header">
+      <h2 id="statusModalTitle">Notice</h2>
+    </div>
+    <div class="modal-body" style="text-align:center;">
+      <p id="statusModalMessage" style="margin:0;line-height:1.5;"></p>
+      <div style="display:flex;justify-content:center;margin-top:16px;">
+        <button class="btn primary" type="button" id="statusModalOkBtn" style="min-width:120px;">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="notifToastHost" style="position:fixed;top:16px;right:16px;z-index:120;display:flex;flex-direction:column;gap:8px;pointer-events:none;"></div>
 
     <script>
       const TEMPLATE_KEY = 'digibarangay_certificate_template_v2';
+      const TEMPLATE_OVERRIDE_KEY = 'digibarangay_cert_template_override_v1';
       const LOGO_KEY = 'digibarangay_certificate_logo_dataurl_v2';
       const CERT_AUTOFILL_KEY = 'digibarangay_cert_autofill';
   const REQUESTS_KEY = 'digibarangay_requests';
   const NOTIF_SEEN_KEY = 'digibarangay_seen_request_refs_v1';
       const CERT_TEMPLATE_FILES = @json($certTemplateFiles);
+      const URL_QUERY = new URLSearchParams(window.location.search);
+      const IS_DOCS_VIEW = URL_QUERY.get('mode') === 'docs';
       const AUTO_HEADER_PRESET = {
         barangayName: 'BARANGAY 192',
         barangayAddress: 'City/Municipality, Province',
@@ -424,6 +564,18 @@
           const raw = sessionStorage.getItem(CERT_AUTOFILL_KEY);
           if (!raw) return null;
           sessionStorage.removeItem(CERT_AUTOFILL_KEY);
+          const parsed = JSON.parse(raw);
+          return parsed && typeof parsed === 'object' ? parsed : null;
+        } catch {
+          return null;
+        }
+      })();
+
+      const CERT_TEMPLATE_OVERRIDE_DATA = (() => {
+        try {
+          const raw = sessionStorage.getItem(TEMPLATE_OVERRIDE_KEY);
+          if (!raw) return null;
+          sessionStorage.removeItem(TEMPLATE_OVERRIDE_KEY);
           const parsed = JSON.parse(raw);
           return parsed && typeof parsed === 'object' ? parsed : null;
         } catch {
@@ -577,10 +729,19 @@
         try {
           const raw = localStorage.getItem(TEMPLATE_KEY);
           const t = raw ? JSON.parse(raw) : null;
-          if (!t || typeof t !== 'object') return { ...DEFAULT_TEMPLATE };
-          return { ...DEFAULT_TEMPLATE, ...t, ...AUTO_HEADER_PRESET };
+          const base = (!t || typeof t !== 'object')
+            ? { ...DEFAULT_TEMPLATE }
+            : { ...DEFAULT_TEMPLATE, ...t };
+          if (CERT_TEMPLATE_OVERRIDE_DATA && typeof CERT_TEMPLATE_OVERRIDE_DATA === 'object') {
+            return { ...base, ...CERT_TEMPLATE_OVERRIDE_DATA, ...AUTO_HEADER_PRESET };
+          }
+          return { ...base, ...AUTO_HEADER_PRESET };
         } catch {
-          return { ...DEFAULT_TEMPLATE };
+          const fallback = { ...DEFAULT_TEMPLATE };
+          if (CERT_TEMPLATE_OVERRIDE_DATA && typeof CERT_TEMPLATE_OVERRIDE_DATA === 'object') {
+            return { ...fallback, ...CERT_TEMPLATE_OVERRIDE_DATA, ...AUTO_HEADER_PRESET };
+          }
+          return fallback;
         }
       }
 
@@ -741,12 +902,21 @@
 
         // Format
         const border = t.borderColor || DEFAULT_TEMPLATE.borderColor;
-        document.getElementById('paper').style.setProperty('--certBorder', border);
-        document.getElementById('paper').style.borderColor = border;
+        const paperEl = document.getElementById('paper');
+        paperEl.style.setProperty('--certBorder', border);
+        if (IS_DOCS_VIEW) {
+          // Docs PDF view should not show the visible vertical edge line.
+          paperEl.style.border = '0';
+        } else {
+          paperEl.style.border = '1px solid ' + border;
+        }
         const issueEmail = String(t.issueEmail || DEFAULT_TEMPLATE.issueEmail || '').trim();
-        document.getElementById('pvEmail').textContent = issueEmail
-          ? ('For verification, email: ' + issueEmail)
-          : 'For verification, email: (Optional)';
+        const pvEmailEl = document.getElementById('pvEmailNote') || document.getElementById('pvEmail');
+        if (pvEmailEl) {
+          pvEmailEl.textContent = issueEmail
+            ? ('For verification, email: ' + issueEmail)
+            : 'For verification, email: (Optional)';
+        }
 
         // Logo
         setAutoHeaderDesign();
@@ -1037,6 +1207,130 @@
           const idx = Number(btn.getAttribute('data-template-index'));
           if (Number.isNaN(idx) || !CERT_TEMPLATE_FILES[idx]) return;
           applyTemplateFromFileName(CERT_TEMPLATE_FILES[idx].name || 'Template');
+        });
+      }
+
+      const pdfPreviewModal = document.getElementById('pdfPreviewModal');
+      const pdfPreviewMount = document.getElementById('pdfPreviewMount');
+      const pdfPreviewCloseBtn = document.getElementById('pdfPreviewCloseBtn');
+      const pdfPrintBtn = document.getElementById('pdfPrintBtn');
+      const viewPdfBtn = document.getElementById('viewPdfBtn');
+      const statusModal = document.getElementById('statusModal');
+      const statusModalTitle = document.getElementById('statusModalTitle');
+      const statusModalMessage = document.getElementById('statusModalMessage');
+      const statusModalClose = document.getElementById('statusModalClose');
+      const statusModalOkBtn = document.getElementById('statusModalOkBtn');
+
+      function openStatusModal(title, message) {
+        if (!statusModal || !statusModalTitle || !statusModalMessage) return;
+        statusModalTitle.textContent = String(title || 'Notice');
+        statusModalMessage.textContent = String(message || '');
+        statusModal.hidden = false;
+        statusModal.classList.add('open');
+      }
+
+      function closeStatusModal() {
+        if (!statusModal) return;
+        statusModal.classList.remove('open');
+        statusModal.hidden = true;
+      }
+
+      if (statusModalClose) statusModalClose.addEventListener('click', closeStatusModal);
+      if (statusModalOkBtn) statusModalOkBtn.addEventListener('click', closeStatusModal);
+      if (statusModal) {
+        statusModal.addEventListener('click', (e) => {
+          if (e.target === statusModal) closeStatusModal();
+        });
+      }
+
+      function closePdfPreview() {
+        if (!pdfPreviewModal) return;
+        pdfPreviewModal.classList.remove('open');
+        pdfPreviewModal.hidden = true;
+      }
+
+      function openPdfPreview() {
+        const sourcePaper = document.getElementById('paper');
+        if (!sourcePaper || !pdfPreviewModal || !pdfPreviewMount) return;
+
+        // Mirror latest current form values before creating PDF-like preview.
+        renderPreview(readForm());
+
+        const mirror = sourcePaper.cloneNode(true);
+        mirror.id = 'paperMirror';
+        pdfPreviewMount.innerHTML = '';
+        pdfPreviewMount.appendChild(mirror);
+
+        pdfPreviewModal.hidden = false;
+        pdfPreviewModal.classList.add('open');
+      }
+
+      function updateRequestPdfSavedState(ref, fileName, savedTemplate, savedPaperHtml) {
+        const targetRef = String(ref || '').trim();
+        if (!targetRef) return;
+
+        const allRequests = loadRequests();
+        const idx = allRequests.findIndex((item) => String(item?.ref || '').trim() === targetRef);
+        if (idx === -1) return;
+
+        allRequests[idx].pdfSaved = true;
+        allRequests[idx].pdfSavedAt = new Date().toISOString();
+        allRequests[idx].savedCertUpdatedAt = allRequests[idx].pdfSavedAt;
+        if (fileName) allRequests[idx].pdfFileName = fileName;
+        if (savedTemplate && typeof savedTemplate === 'object') {
+          allRequests[idx].savedTemplate = savedTemplate;
+          const certType = String(savedTemplate.certificateType || '').trim();
+          if (certType) {
+            allRequests[idx].savedCertType = certType;
+          }
+        }
+        if (typeof savedPaperHtml === 'string' && savedPaperHtml.trim()) {
+          allRequests[idx].savedPaperHtml = savedPaperHtml;
+        }
+        localStorage.setItem(REQUESTS_KEY, JSON.stringify(allRequests));
+      }
+
+      if (viewPdfBtn) viewPdfBtn.addEventListener('click', openPdfPreview);
+      if (pdfPreviewCloseBtn) pdfPreviewCloseBtn.addEventListener('click', closePdfPreview);
+      if (pdfPreviewModal) {
+        pdfPreviewModal.addEventListener('click', (e) => {
+          if (e.target === pdfPreviewModal) closePdfPreview();
+        });
+      }
+
+      if (pdfPrintBtn) {
+        pdfPrintBtn.addEventListener('click', async () => {
+          const source = document.getElementById('paper');
+          if (!source) return;
+
+          pdfPrintBtn.disabled = true;
+          try {
+            renderPreview(readForm());
+            const refFromAutofill = String(CERT_AUTOFILL_DATA?.ref || '').trim();
+            const snapshotTemplate = readForm();
+            saveTemplate(snapshotTemplate);
+
+            if (!refFromAutofill) {
+              openStatusModal(
+                'Saved Template',
+                'Certificate format has been saved as template. To link it to Dashs/Resident/Docs request list, open a resident request first then click Save PDF again.'
+              );
+              return;
+            }
+
+            const snapshotHtml = source.outerHTML;
+            const fileName = refFromAutofill + '.pdf';
+            updateRequestPdfSavedState(refFromAutofill, fileName, snapshotTemplate, snapshotHtml);
+            openStatusModal(
+              'Saved',
+              'PDF format has been linked to this request. Dashs, Resident, and Docs can now view the saved certificate format.'
+            );
+          } catch (error) {
+            console.error('Save format error:', error);
+            openStatusModal('Save Failed', error?.message || 'Unable to save PDF format right now.');
+          } finally {
+            pdfPrintBtn.disabled = false;
+          }
         });
       }
 

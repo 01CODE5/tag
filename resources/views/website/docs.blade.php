@@ -45,6 +45,30 @@
     .status-approved{background:#ecfdf5;color:#065f46;border:1px solid #bbf7d0}
     .status-rejected{background:#fff1f2;color:#831843;border:1px solid #ffd6e0}
     .modal-form select{width:100%;box-sizing:border-box;padding:.8rem 1rem;border-radius:10px;border:1px solid #e6e9ef;background:#f8fafc}
+
+    body{
+      position:relative;
+    }
+
+    body::before{
+      content:'';
+      position:fixed;
+      left:50%;
+      top:54%;
+      width:460px;
+      height:460px;
+      transform:translate(-50%, -50%);
+      background:url('{{ asset('img/Barangay Official Logo.png') }}') center/contain no-repeat;
+      opacity:.07;
+      filter:grayscale(100%) blur(2px);
+      pointer-events:none;
+      z-index:0;
+    }
+
+    body > *{
+      position:relative;
+      z-index:1;
+    }
   </style>
 </head>
 <body>
@@ -103,10 +127,10 @@
       <div class="table-card">
         <table class="requests-table">
           <thead>
-            <tr><th>Reference ID</th><th>Name</th><th>Date Requested</th><th>Valid Until</th><th>Status</th><th>Actions</th></tr>
+            <tr><th>Reference ID</th><th>Name</th><th>Date Requested</th><th>Valid Until</th><th>Status</th><th>PDF</th><th>Actions</th></tr>
           </thead>
           <tbody id="requestsBody">
-            <tr><td colspan="6" class="muted">You have no requests yet.</td></tr>
+            <tr><td colspan="7" class="muted">You have no requests yet.</td></tr>
           </tbody>
         </table>
       </div>
@@ -182,6 +206,8 @@
   <script>
     const CERT_AUTOFILL_KEY = 'digibarangay_cert_autofill';
     const TEMPLATE_KEY = 'digibarangay_certificate_template_v2';
+    const TEMPLATE_OVERRIDE_KEY = 'digibarangay_cert_template_override_v1';
+    const GLOBAL_CLEARANCE_TEMPLATE_KEY = 'digibarangay_saved_clearance_template_v1';
     const DEFAULT_TEMPLATE = {
       certificateType: 'BARANGAY CLEARANCE',
       bodyHeading: 'TO WHOM IT MAY CONCERN:',
@@ -196,6 +222,16 @@
     let currentPreviewRequest = null;
     let currentPreviewPdfUrl = '';
     let currentPreviewPdfBlob = null;
+
+    function readGlobalClearanceTemplate() {
+      try {
+        const raw = localStorage.getItem(GLOBAL_CLEARANCE_TEMPLATE_KEY);
+        const parsed = raw ? JSON.parse(raw) : null;
+        return parsed && typeof parsed === 'object' ? parsed : null;
+      } catch {
+        return null;
+      }
+    }
 
     // Layout preview: skip backend auth check and use any stored local user (if present)
     (function(){
@@ -319,14 +355,27 @@
         const tbody = document.getElementById('requestsBody');
         function renderRequests(list){
           if(!list || !list.length){
-            tbody.innerHTML = '<tr><td colspan="6" class="muted">You have no requests yet.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="muted">You have no requests yet.</td></tr>';
             return;
           }
           tbody.innerHTML = list.map(r=>{
             const statusLabel = r.status ? (r.status.charAt(0).toUpperCase()+r.status.slice(1)) : '';
             const statusHtml = `<span class="status-badge status-${r.status}">${statusLabel}</span>`;
+            const globalTemplate = readGlobalClearanceTemplate();
+            const certTypeRaw = String((r.savedTemplate && r.savedTemplate.certificateType) || r.savedCertType || (globalTemplate && globalTemplate.certificateType) || '').trim();
+            const certTypeSafe = certTypeRaw
+              .replaceAll('&', '&amp;')
+              .replaceAll('<', '&lt;')
+              .replaceAll('>', '&gt;');
+            const certTypeNote = certTypeSafe
+              ? '<div style="font-size:.72rem;color:#4b5563;margin-top:.25rem;line-height:1.2;">' + certTypeSafe + '</div>'
+              : '';
+            const pdfHtml = r.pdfSaved
+              || !!globalTemplate
+              ? ('<span class="status-badge status-approved">Saved</span>' + certTypeNote)
+              : '<span class="status-badge status-pending">Not Saved</span>';
             const actions = `<div class="actions-cell"><button class="action-btn" data-action="view" data-ref="${r.ref||''}" title="View">👁️</button><button class="action-btn" data-action="download" data-ref="${r.ref||''}" title="Download">⬇️</button><button class="action-btn" data-action="delete" data-ref="${r.ref||''}" title="Delete">🗑️</button></div>`;
-            return `<tr data-ref="${r.ref||''}"><td>${r.ref||''}</td><td>${r.name||''}</td><td>${r.dateRequested||''}</td><td>${r.validUntil||''}</td><td>${statusHtml}</td><td>${actions}</td></tr>`;
+            return `<tr data-ref="${r.ref||''}"><td>${r.ref||''}</td><td>${r.name||''}</td><td>${r.dateRequested||''}</td><td>${r.validUntil||''}</td><td>${statusHtml}</td><td>${pdfHtml}</td><td>${actions}</td></tr>`;
           }).join('');
         }
         renderRequests(requests);
@@ -452,6 +501,16 @@
           const payload = buildCertificatePdfPayload(req);
           try {
             sessionStorage.setItem(CERT_AUTOFILL_KEY, JSON.stringify(payload));
+            if (req && req.savedTemplate && typeof req.savedTemplate === 'object') {
+              sessionStorage.setItem(TEMPLATE_OVERRIDE_KEY, JSON.stringify(req.savedTemplate));
+            } else {
+              const globalTemplate = readGlobalClearanceTemplate();
+              if (globalTemplate && typeof globalTemplate === 'object') {
+                sessionStorage.setItem(TEMPLATE_OVERRIDE_KEY, JSON.stringify(globalTemplate));
+              } else {
+                sessionStorage.removeItem(TEMPLATE_OVERRIDE_KEY);
+              }
+            }
           } catch (err) {
             console.error('Unable to save certificate autofill payload', err);
           }
@@ -467,7 +526,7 @@
           sourceFrame.style.width = '794px';
           sourceFrame.style.height = '1123px';
           sourceFrame.style.border = '0';
-          sourceFrame.src = '/certificate?t=' + Date.now();
+          sourceFrame.src = '/certificate?mode=docs&t=' + Date.now();
           document.body.appendChild(sourceFrame);
 
           try {

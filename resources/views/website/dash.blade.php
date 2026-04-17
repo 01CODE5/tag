@@ -9,6 +9,31 @@
   <meta http-equiv="Expires" content="0" />
   <title>Barangay Admin - DIGIBARANGAY</title>
  <link rel="stylesheet" href="{{asset('css/styles.css')}}" />
+ <style>
+  .admin-dashboard {
+    position: relative;
+  }
+
+  .admin-dashboard::before {
+    content: '';
+    position: fixed;
+    left: 50%;
+    top: 54%;
+    width: 460px;
+    height: 460px;
+    transform: translate(-50%, -50%);
+    background: url('{{ asset('img/Barangay Official Logo.png') }}') center/contain no-repeat;
+    opacity: .07;
+    filter: grayscale(100%) blur(2px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .adm-layout {
+    position: relative;
+    z-index: 1;
+  }
+ </style>
 </head>
 <body class="admin-dashboard">
   <div class="adm-layout">
@@ -87,7 +112,7 @@
           <div class="adm-toolbar">
             <div class="search" aria-label="Search">
               <span style="opacity:.7">🔎</span>
-              <input id="q" type="text" placeholder="Search name / clearance / reason" />
+              <input id="q" type="text" placeholder="Search name / address / clearance / reason" />
             </div>
             <select id="statusFilter" aria-label="Status filter">
               <option value="">All Statuses</option>
@@ -103,10 +128,13 @@
                 <tr>
                   <th>Name</th>
                   <th>Email</th>
+                  <th>Address</th>
+                  <th>Age</th>
                   <th>Purpose</th>
                   <th>Reason</th>
                   <th>Date</th>
                   <th>Status</th>
+                  <th>PDF</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -164,8 +192,14 @@
   <script>
     const STORAGE_KEY = 'digibarangay_requests';
     const CERT_AUTOFILL_KEY = 'digibarangay_cert_autofill';
+    const TEMPLATE_OVERRIDE_KEY = 'digibarangay_cert_template_override_v1';
+    const GLOBAL_CLEARANCE_TEMPLATE_KEY = 'digibarangay_saved_clearance_template_v1';
     const EMAIL_BOOK_KEY = 'digibarangay_request_email_book_v1';
     const NOTIF_SEEN_KEY = 'digibarangay_seen_request_refs_v1';
+
+    function readGlobalClearanceTemplate() {
+      return safeJsonParse(localStorage.getItem(GLOBAL_CLEARANCE_TEMPLATE_KEY), null);
+    }
 
     function loadRequests() {
       try {
@@ -651,16 +685,18 @@
       const filtered = requests.filter(r => {
         const name = normalizeText(r.name);
         const email = normalizeText(getRecipientEmail(r));
+        const address = normalizeText(r.address);
+        const age = normalizeText(r.age);
         const purpose = normalizeText(r.purpose);
         const reason = normalizeText(r.purposeReason);
-        const matchQ = !q || name.includes(q) || email.includes(q) || purpose.includes(q) || reason.includes(q);
+        const matchQ = !q || name.includes(q) || email.includes(q) || address.includes(q) || age.includes(q) || purpose.includes(q) || reason.includes(q);
         const matchStatus = !status || normalizeText(r.status) === status;
         return matchQ && matchStatus;
       });
 
       const rows = document.getElementById('rows');
       if (!filtered.length) {
-        rows.innerHTML = '<tr><td colspan="7" style="padding:1rem;color:#6b7280">No requests found.</td></tr>';
+        rows.innerHTML = '<tr><td colspan="10" style="padding:1rem;color:#6b7280">No requests found.</td></tr>';
         return;
       }
 
@@ -668,10 +704,25 @@
         const ref = r.ref || String(idx + 1);
         const name = r.name || '—';
         const email = getRecipientEmail(r) || '—';
+        const address = String(r.address || '—').trim() || '—';
+        const age = String(r.age ?? '').trim() || '—';
         const purpose = r.purpose || '—';
         const reason = r.purposeReason || '—';
         const date = r.dateRequested || r.date || '—';
         const st = normalizeText(r.status) || 'pending';
+        const globalTemplate = readGlobalClearanceTemplate();
+        const pdfSaved = !!r.pdfSaved || !!globalTemplate;
+        const certTypeRaw = String((r.savedTemplate && r.savedTemplate.certificateType) || r.savedCertType || (globalTemplate && globalTemplate.certificateType) || '').trim();
+        const certTypeSafe = certTypeRaw
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;');
+        const certTypeNote = certTypeSafe
+          ? '<div style="font-size:.72rem;color:#4b5563;margin-top:.25rem;line-height:1.2;">' + certTypeSafe + '</div>'
+          : '';
+        const pdfBadge = pdfSaved
+          ? ('<span class="badge approved">Saved</span>' + certTypeNote)
+          : '<span class="badge pending">Not Saved</span>';
 
         const actions = st === 'pending'
           ? '<button class="btn-mini view" data-action="view" data-ref="' + ref + '">View</button> '
@@ -688,10 +739,13 @@
         return '<tr>'
           + '<td>' + name + '</td>'
           + '<td>' + email + '</td>'
+          + '<td>' + address + '</td>'
+          + '<td>' + age + '</td>'
           + '<td>' + purpose + '</td>'
           + '<td>' + reason + '</td>'
           + '<td>' + date + '</td>'
           + '<td>' + statusBadge(st) + '</td>'
+          + '<td>' + pdfBadge + '</td>'
           + '<td><div class="actions">' + actions + '</div></td>'
           + '</tr>';
       }).join('');
@@ -715,7 +769,7 @@
 
       const payload = {
         name: String(req.name || '').trim(),
-        age: req.age ?? '',
+        age: String(req.age ?? '').trim(),
         address: String(req.address || '').trim(),
         purpose: String(req.purposeReason || req.purpose || '').trim(),
         date: String(req.dateRequested || req.date || '').trim(),
@@ -724,6 +778,16 @@
 
       try {
         sessionStorage.setItem(CERT_AUTOFILL_KEY, JSON.stringify(payload));
+        if (req && req.savedTemplate && typeof req.savedTemplate === 'object') {
+          sessionStorage.setItem(TEMPLATE_OVERRIDE_KEY, JSON.stringify(req.savedTemplate));
+        } else {
+          const globalTemplate = readGlobalClearanceTemplate();
+          if (globalTemplate && typeof globalTemplate === 'object') {
+            sessionStorage.setItem(TEMPLATE_OVERRIDE_KEY, JSON.stringify(globalTemplate));
+          } else {
+            sessionStorage.removeItem(TEMPLATE_OVERRIDE_KEY);
+          }
+        }
       } catch (err) {
         console.error('Unable to save certificate autofill payload', err);
       }
