@@ -39,6 +39,10 @@
     .btn-reject{background:#dc3545;color:#fff}
     .btn-change-pw{background:#0b66c2;color:#fff;margin-right:6px}
     .btn-delete{background:#dc3545;color:#fff}
+    .status-indicator{display:inline-block;width:12px;height:12px;border-radius:50%;margin:0 auto;vertical-align:middle}
+    .status-online{background:#28a745}
+    .status-offline{background:#dc3545}
+    .status-cell{text-align:center}
     .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:1000}
     .modal-overlay.show{display:flex}
     .modal-box{background:#fff;width:min(92vw,420px);border-radius:10px;box-shadow:0 12px 28px rgba(0,0,0,0.25);padding:20px 18px;text-align:center}
@@ -86,11 +90,12 @@
                 <th>Username</th>
                 <th>Email</th>
                 <th>Contact</th>
+                <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td colspan="5" style="text-align:center;color:#666">Loading staff accounts...</td></tr>
+              <tr><td colspan="6" style="text-align:center;color:#666">Loading staff accounts...</td></tr>
             </tbody>
           </table>
         </div>
@@ -192,20 +197,40 @@
       modal.setAttribute('aria-hidden', 'true');
     }
 
+    // Update last seen timestamp for current admin
+    async function updateLastSeen() {
+      try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        await fetch('/api/officers/update-last-seen', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': csrfToken
+          },
+          credentials: 'same-origin'
+        });
+      } catch (err) {
+        console.error('Update last seen error:', err);
+      }
+    }
+
     // Load staff accounts from backend
     async function loadStaff() {
+      // Update last seen for current admin
+      updateLastSeen();
+
       try {
         const res = await fetch('/api/officers', {
           headers: { 'Accept': 'application/json' }
         });
         if (!res.ok) {
-          document.querySelector('#staffTable tbody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#c9302c">Failed to load staff accounts.</td></tr>';
+          document.querySelector('#staffTable tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#c9302c">Failed to load staff accounts.</td></tr>';
           return;
         }
         const body = await res.json();
         const staff = body.data || [];
         if (staff.length === 0) {
-          document.querySelector('#staffTable tbody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#666">No staff accounts yet.</td></tr>';
+          document.querySelector('#staffTable tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#666">No staff accounts yet.</td></tr>';
           return;
         }
         const rows = staff.map(s => `
@@ -214,6 +239,7 @@
             <td>${s.username || '-'}</td>
             <td>${s.email || '-'}</td>
             <td>${s.contact || '-'}</td>
+            <td class="status-cell"><span class="status-indicator ${s.is_online ? 'status-online' : 'status-offline'}"></span></td>
             <td>
               <button class="btn btn-change-pw" data-id="${s.id}" data-email="${s.email}">Change Password</button>
               <button class="btn btn-delete" data-id="${s.id}" data-name="${s.fullname}">Delete</button>
@@ -241,7 +267,7 @@
         });
       } catch (err) {
         console.error('Load staff error', err);
-        document.querySelector('#staffTable tbody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#c9302c">Network error.</td></tr>';
+        document.querySelector('#staffTable tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#c9302c">Network error.</td></tr>';
       }
     }
 
