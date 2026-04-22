@@ -14,6 +14,11 @@ Route::get('/officers', [OfficerController::class, 'index']);
 Route::post('/officers/login', [OfficerController::class, 'login']);
 Route::post('/officers/register', [OfficerController::class, 'register']);
 
+Route::middleware(['web'])->group(function () {
+    Route::delete('/officers/{id}', [OfficerController::class, 'destroy']);
+    Route::put('/officers/{id}/password', [OfficerController::class, 'updatePassword']);
+});
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);

@@ -280,24 +280,37 @@
     });
 
     document.getElementById('confirmYes').addEventListener('click', async () => {
-      if (!selectedDeleteId) return;
+      console.log('Delete button clicked, selectedDeleteId:', selectedDeleteId);
+      if (!selectedDeleteId) {
+        console.log('No selectedDeleteId, returning');
+        return;
+      }
+
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+      console.log('CSRF Token:', csrfToken);
 
       try {
+        console.log('Making DELETE request to:', `/api/officers/${selectedDeleteId}`);
         const res = await fetch(`/api/officers/${selectedDeleteId}`, {
           method: 'DELETE',
-          headers: { 'Accept': 'application/json' }
+          headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken }, credentials: 'same-origin'
         });
 
+        console.log('Response status:', res.status);
+        console.log('Response ok:', res.ok);
+
         if (res.ok) {
+          console.log('Delete successful, hiding modal and reloading staff');
           hideConfirmDeleteModal();
           showSuccessModal('Account Deleted', `Account for ${selectedDeleteName} has been removed.`);
           loadStaff();
         } else {
-          alert('Failed to delete account.');
+          console.log('Delete failed with status:', res.status);
+          const errorText = await res.text();
+          console.log('Error response:', errorText);
         }
       } catch (err) {
-        console.error('Delete error', err);
-        alert('Error deleting account.');
+        console.error('Delete error:', err);
       }
     });
 
@@ -314,13 +327,12 @@
         return;
       }
 
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
       try {
         const res = await fetch(`/api/officers/${selectedUserId}/password`, {
           method: 'PUT',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken }, credentials: 'same-origin',
           body: JSON.stringify({ password: newPassword })
         });
 
@@ -328,16 +340,14 @@
           hideChangePasswordModal();
           showSuccessModal('Password Updated', `Password for ${selectedUserEmail} has been changed successfully.`);
           loadStaff();
-        } else {
-          const error = await res.json();
-          alert(error.message || 'Failed to update password');
         }
       } catch (err) {
         console.error('Password update error', err);
-        alert('Error updating password.');
       }
     });
 
   </script>
 </body>
 </html>
+
+

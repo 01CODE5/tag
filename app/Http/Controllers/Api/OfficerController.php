@@ -172,4 +172,58 @@ class OfficerController extends Controller
             'officer' => $officer
         ], 201);
     }
+
+    public function destroy($id)
+    {
+        // Check admin session
+        if (session('admin_logged_in') !== true || session('admin_role') !== 'admin') {
+            return response()->json([
+                'message' => 'Unauthorized. Admin access required.'
+            ], 403);
+        }
+
+        $officer = BarangayOfficer::find($id);
+        
+        if (!$officer) {
+            return response()->json([
+                'message' => 'Officer not found'
+            ], 404);
+        }
+
+        $officer->delete();
+
+        return response()->json([
+            'message' => 'Officer deleted successfully'
+        ], 200);
+    }
+
+    public function updatePassword(Request $request, $id)
+    {
+        // Check admin session
+        if (session('admin_logged_in') !== true || session('admin_role') !== 'admin') {
+            return response()->json([
+                'message' => 'Unauthorized. Admin access required.'
+            ], 403);
+        }
+
+        $officer = BarangayOfficer::find($id);
+        
+        if (!$officer) {
+            return response()->json([
+                'message' => 'Officer not found'
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'password' => 'required|string|min:6',
+        ]);
+
+        $officer->update([
+            'password' => Hash::make($validated['password'])
+        ]);
+
+        return response()->json([
+            'message' => 'Password updated successfully'
+        ], 200);
+    }
 }

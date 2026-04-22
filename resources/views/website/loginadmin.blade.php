@@ -56,43 +56,75 @@
         </div>
     </div>
 
-        <script>
-            const adminLoginForm = document.getElementById('adminLoginForm');
-            adminLoginForm.addEventListener('submit', async function (e) {
-                e.preventDefault();
-                const login = String(adminLoginForm.login.value || '').trim();
-                const password = String(adminLoginForm.password.value || '').trim();
-                const csrf = adminLoginForm.querySelector('input[name="_token"]')?.value || '';
+<div id="errorModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+  <div class="bg-white w-full max-w-sm rounded-xl shadow-xl p-6 text-center">
+    <h2 class="text-lg font-bold mb-2">Login Error</h2>
+    <p id="errorMessage" class="text-gray-600 mb-5">
+      Access denied. Admin accounts only.
+    </p>
+    <button id="errorOkBtn" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-full font-semibold">
+      OK
+    </button>
+  </div>
+</div>
 
-                if (!login || !password) {
-                    alert('Please enter username/email and password.');
-                    return;
-                }
+<script>
+  const errorModal = document.getElementById('errorModal');
+  const errorMessage = document.getElementById('errorMessage');
+  const errorOkBtn = document.getElementById('errorOkBtn');
 
-                try {
-                    const res = await fetch(adminLoginForm.action, {
-                        method: 'POST',
-                        headers: {
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrf,
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        body: JSON.stringify({ login, email: login, password })
-                    });
+  function showError(message) {
+    errorMessage.textContent = message;
+    errorModal.classList.remove('hidden');
+  }
 
-                    const body = await res.json().catch(() => ({}));
-                    if (!res.ok) {
-                        alert(body.message || 'Login failed.');
-                        return;
-                    }
+  function closeError() {
+    errorModal.classList.add('hidden');
+  }
 
-                    window.location.replace('/dashboard');
-                } catch (err) {
-                    alert('Network error. Please try again.');
-                }
-            });
-        </script>
+  errorOkBtn.addEventListener('click', closeError);
+
+  // click outside = close
+  errorModal.addEventListener('click', (e) => {
+    if (e.target === errorModal) closeError();
+  });
+
+  const adminLoginForm = document.getElementById('adminLoginForm');
+  adminLoginForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const login = String(adminLoginForm.login.value || '').trim();
+    const password = String(adminLoginForm.password.value || '').trim();
+    const csrf = adminLoginForm.querySelector('input[name="_token"]')?.value || '';
+
+    if (!login || !password) {
+      showError('Please enter username/email and password.');
+      return;
+    }
+
+    try {
+      const res = await fetch(adminLoginForm.action, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrf,
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ login, email: login, password })
+      });
+
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showError(body.message || 'Login failed.');
+        return;
+      }
+
+      window.location.replace('/dashboard');
+    } catch (err) {
+      showError('Network error. Please try again.');
+    }
+  });
+</script>
 
 </body>
 </html>
