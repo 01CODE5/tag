@@ -81,7 +81,7 @@
           <div style="font-size:.9rem;opacity:.9">Apply for barangay clearance and track your requests</div>
         </div>
       </div>
-      <div class="user-info">
+      <div class="user-info" style="cursor:pointer;" id="profileInfo">
         <div style="text-align:right">
           <div id="dashUserName">User Name</div>
           <div id="dashUserEmail" style="font-size:.9rem;opacity:.85"></div>
@@ -197,6 +197,33 @@
           <button type="button" class="btn primary" id="viewDownloadBtn">Download PDF</button>
         </div>
         <iframe id="viewFrame" title="Certificate preview" style="width:100%;height:78vh;border:0;background:#fff;border-radius:0 0 16px 16px;"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change Password Modal -->
+  <div id="changePasswordModal" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="changePasswordTitle">
+      <button class="modal-close" id="changePasswordModalClose" aria-label="Close">✕</button>
+      <div class="modal-header"><h2 id="changePasswordTitle">Change Password</h2></div>
+      <div class="modal-body">
+        <form id="changePasswordForm" class="modal-form">
+          <fieldset>
+            <label>Current Password *
+              <input id="oldPasswordInput" name="oldPassword" type="password" required />
+            </label>
+            <label>New Password *
+              <input id="newPasswordInput" name="newPassword" type="password" required />
+            </label>
+            <label>Confirm Password *
+              <input id="confirmPasswordInput" name="confirmPassword" type="password" required />
+            </label>
+          </fieldset>
+          <div class="form-actions">
+            <button type="button" class="btn" id="changePasswordCancel">CANCEL</button>
+            <button type="submit" class="btn primary">UPDATE PASSWORD</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -412,6 +439,94 @@
           clearResidentAuthState();
           window.location.replace('/login');
         });
+
+        // Profile modal wiring
+        const profileInfo = document.getElementById('profileInfo');
+        const changePasswordModal = document.getElementById('changePasswordModal');
+        const changePasswordModalClose = document.getElementById('changePasswordModalClose');
+        const changePasswordCancel = document.getElementById('changePasswordCancel');
+        const changePasswordForm = document.getElementById('changePasswordForm');
+
+        function openChangePasswordModal(){ 
+          if(changePasswordModal){ 
+            changePasswordModal.hidden = false; 
+            changePasswordModal.classList.add('open'); 
+            const f = changePasswordModal.querySelector('input[name="oldPassword"]'); 
+            if(f) f.focus(); 
+          } 
+        }
+        function closeChangePasswordModal(){ 
+          if(changePasswordModal){ 
+            changePasswordModal.hidden = true; 
+            changePasswordModal.classList.remove('open'); 
+          } 
+        }
+
+        if(profileInfo) profileInfo.addEventListener('click', (e)=>{
+          // Don't open modal if user clicked the logout button area
+          if(e.target.closest('#logoutBtn')) return;
+          e.preventDefault();
+          if(changePasswordForm) changePasswordForm.reset();
+          openChangePasswordModal();
+        });
+        if(changePasswordModalClose) changePasswordModalClose.addEventListener('click', closeChangePasswordModal);
+        if(changePasswordCancel) changePasswordCancel.addEventListener('click', closeChangePasswordModal);
+        if(changePasswordModal) changePasswordModal.addEventListener('click',(e)=>{ if(e.target===changePasswordModal) closeChangePasswordModal(); });
+
+        // Password change form submission
+        if(changePasswordForm) {
+          changePasswordForm.addEventListener('submit', async (e)=>{
+            e.preventDefault();
+            const oldPassword = document.getElementById('oldPasswordInput').value.trim();
+            const newPassword = document.getElementById('newPasswordInput').value.trim();
+            const confirmPassword = document.getElementById('confirmPasswordInput').value.trim();
+
+            // Validation
+            if(!oldPassword || !newPassword || !confirmPassword) {
+              showToast('All fields are required', {duration:2500});
+              return;
+            }
+
+            if(newPassword !== confirmPassword) {
+              showToast('New Password and Confirm Password do not match', {duration:2500});
+              return;
+            }
+
+            if(newPassword.length < 6) {
+              showToast('New Password must be at least 6 characters long', {duration:2500});
+              return;
+            }
+
+            try {
+              const token = localStorage.getItem('authToken');
+              const response = await fetch('/resident/change-password', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                  'Authorization': token ? 'Bearer ' + token : ''
+                },
+                body: JSON.stringify({
+                  email: user?.email,
+                  oldPassword: oldPassword,
+                  newPassword: newPassword
+                })
+              });
+
+              const result = await response.json();
+              
+              if(response.ok && result.success) {
+                showToast('Password changed successfully!', {duration:3000});
+                closeChangePasswordModal();
+              } else {
+                showToast(result.message || 'Failed to change password', {duration:2500});
+              }
+            } catch (err) {
+              console.error('Password change error:', err);
+              showToast('Error changing password. Please try again.', {duration:2500});
+            }
+          });
+        }
 
         // Apply modal wiring
         const applyBtn = document.querySelector('.apply-btn');

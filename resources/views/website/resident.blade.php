@@ -51,6 +51,7 @@
         <a href="./dashs"><span class="ico">🏠</span><span>Dashboard</span></a>
         <a href="./certificate"><span class="ico">📄</span><span>Certificate Template</span></a>
         <a class="active" href="./resident"><span class="ico">👥</span><span>Residents record</span></a>
+        <a href="./rest-acc"><span class="ico">🔐</span><span>Account Management</span></a>
       </nav>
 
       <div class="adm-sidebar-footer">

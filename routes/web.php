@@ -29,6 +29,11 @@ Route::get('/users', function () {
     return view('website.users');
 });
 Route::post('resident/register', [AuthController::class, 'register'])->name('register');
+// Forgot password email sender
+Route::post('/resident/forgot-password', [WebsiteController::class, 'sendResetEmail']);
+Route::post('/resident/change-password', [WebsiteController::class, 'changeResidentPassword']);
+Route::post('/rest-acc/change-password', [WebsiteController::class, 'changePasswordByEmail']);
+
 
 Route::get('/', function () {
     return view('website.Website');
@@ -52,6 +57,10 @@ Route::get('/cert', function () {
 Route::get('/resident', function () use ($adminViewResponse) {
     return $adminViewResponse('website.resident');
 });
+Route::get('/rest-acc', function () use ($adminViewResponse) {
+    return $adminViewResponse('website.rest-acc');
+});
+Route::post('/rest-acc/send-email', [AdminController::class, 'sendRequestEmail']);
 Route::get('/docs', function () {
     return view('website.docs');
 });
@@ -83,6 +92,12 @@ Route::get('/barangay', function () use ($adminViewResponse) {
 Route::post('/barangay/barangay', [OfficerController::class, 'register'])
 ->name('barangay.register');
 
-Route::post('/officers/login', [OfficerController::class, 'login'])->name('officer.login');
+Route::post('/officers/{id}/request-password-change', [OfficerController::class, 'requestPasswordChange']);
+Route::post('/password-change-requests/{id}/approve', [OfficerController::class, 'approvePasswordChangeRequest']);
+Route::post('/password-change-requests/{id}/reject', [OfficerController::class, 'rejectPasswordChangeRequest']);
 
 Route::post('/resident/login', [AuthController::class, 'login'])->name('resident.login');
+
+Route::post('/officers/{id}/request-password-change', [OfficerController::class, 'requestPasswordChange']);
+Route::post('/password-change-requests/{id}/approve', [OfficerController::class, 'approvePasswordChangeRequest']);
+Route::post('/password-change-requests/{id}/reject', [OfficerController::class, 'rejectPasswordChangeRequest']);

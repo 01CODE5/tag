@@ -4,6 +4,14 @@ namespace App\Http\Controllers\Website;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Carbon\Carbon;
+use App\Models\User;
+use App\Models\Resident;
+use App\Models\BarangayOfficer;
 
 class WebsiteController extends Controller
 {
@@ -39,7 +47,212 @@ class WebsiteController extends Controller
 			->header('Expires', '0');
 	}
 
-	private function buildCertificatePdf(array $data): string
+	public function sendResetEmail(Request $request)
+	{
+		$data = $request->validate([
+			'email' => ['required', 'email', 'max:255'],
+		]);
+
+		$email = strtolower(trim($data['email']));
+
+		$exists = User::whereRaw('LOWER(email) = ?', [$email])->exists() || Resident::whereRaw('LOWER(email) = ?', [$email])->exists() || BarangayOfficer::whereRaw('LOWER(email) = ?', [$email])->exists();
+
+		if (!$exists) {
+			return response()->json(['message' => 'Email not found'], 404);
+		}
+
+
+		// Generate a secure token and store a hashed version in password_resets
+		$token = Str::random(64);
+		try {
+			DB::table('password_resets')->updateOrInsert(
+				['email' => $email],
+				['token' => Hash::make($token), 'created_at' => now()]
+			);
+
+			$resetUrl = url('/reset-password?token=' . urlencode($token) . '&email=' . urlencode($email));
+
+			Mail::raw("To reset your password click this link: $resetUrl", function ($m) use ($email) {
+				$m->to($email)->subject('DIGIBARANGAY — Password reset instructions');
+			});
+		} catch (\Throwable $e) {
+			return response()->json(['message' => 'Failed to send email'], 500);
+		}
+
+		return response()->json(['message' => 'Reset email sent']);
+	}
+
+	public function showResetForm(Request $request)
+	{
+		$token = $request->query('token');
+		$email = $request->query('email');
+		return response()->view('website.reset-password', compact('token', 'email'))
+			->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+			->header('Pragma', 'no-cache')
+			->header('Expires', '0');
+	}
+
+	public function resetPassword(Request $request)
+	{
+		$data = $request->validate([
+			'email' => ['required', 'email', 'max:255'],
+			'token' => ['required', 'string'],
+			'password' => ['required', 'string', 'min:6', 'confirmed'],
+		]);
+
+		$email = strtolower(trim($data['email']));
+		$token = $data['token'];
+
+		$record = DB::table('password_resets')->where('email', $email)->first();
+		if (!$record) {
+			if ($request->wantsJson()) {
+				return response()->json(['message' => 'Invalid or expired token'], 400);
+			}
+			return redirect('/login')->with('error', 'Invalid or expired token');
+		}
+
+		// Check expiration (60 minutes)
+		$created = Carbon::parse($record->created_at);
+		if ($created->diffInMinutes(now()) > 60) {
+			DB::table('password_resets')->where('email', $email)->delete();
+			if ($request->wantsJson()) {
+				return response()->json(['message' => 'Token expired'], 400);
+			}
+			return redirect('/login')->with('error', 'Token expired');
+		}
+
+		if (!Hash::check($token, $record->token)) {
+			if ($request->wantsJson()) {
+				return response()->json(['message' => 'Invalid token'], 400);
+			}
+			return redirect('/login')->with('error', 'Invalid token');
+		}
+
+		// Update user password (User, Resident, or BarangayOfficer)
+		$user = User::whereRaw('LOWER(email) = ?', [$email])->first();
+		if (!$user) {
+			$user = Resident::whereRaw('LOWER(email) = ?', [$email])->first();
+		}
+		if (!$user) {
+			$user = BarangayOfficer::whereRaw('LOWER(email) = ?', [$email])->first();
+		}
+
+		if (!$user) {
+			if ($request->wantsJson()) {
+				return response()->json(['message' => 'Account not found'], 404);
+			}
+			return redirect('/login')->with('error', 'Account not found');
+		}
+
+		$user->password = Hash::make($data['password']);
+		$user->save();
+
+		DB::table('password_resets')->where('email', $email)->delete();
+
+		if ($request->wantsJson()) {
+			return response()->json(['message' => 'Password updated']);
+		}
+
+		// Redirect based on user type
+		if ($user instanceof BarangayOfficer) {
+			if ($user->role === 'admin') {
+				return redirect('/dashboard')->with('success', 'Password updated. Welcome back.');
+			} else {
+				return redirect('/barangay')->with('success', 'Password updated. Welcome back.');
+			}
+		} else {
+			return redirect('/docs')->with('success', 'Password updated. Welcome back.');
+		}
+	}
+
+	public function changePasswordByEmail(Request $request)
+	{
+		if (session('admin_logged_in') !== true || session('admin_role') !== 'admin') {
+			return response()->json([
+				'message' => 'Unauthorized. Admin access required.'
+			], 403);
+		}
+
+		$data = $request->validate([
+			'email' => ['required', 'email', 'max:255'],
+			'password' => ['required', 'string', 'min:6', 'confirmed'],
+		]);
+
+		$email = strtolower(trim($data['email']));
+		$user = User::whereRaw('LOWER(email) = ?', [$email])->first();
+		if (!$user) {
+			$user = Resident::whereRaw('LOWER(email) = ?', [$email])->first();
+		}
+		if (!$user) {
+			$user = BarangayOfficer::whereRaw('LOWER(email) = ?', [$email])->first();
+		}
+
+		if (!$user) {
+			return response()->json([
+				'message' => 'Account not found'
+			], 404);
+		}
+
+		$user->password = Hash::make($data['password']);
+		$user->save();
+
+		DB::table('password_resets')->where('email', $email)->delete();
+
+		return response()->json([
+			'message' => 'Password changed successfully'
+		], 200);
+	}
+
+	public function changeResidentPassword(Request $request)
+	{
+		$data = $request->validate([
+			'email' => ['required', 'email', 'max:255'],
+			'oldPassword' => ['required', 'string'],
+			'newPassword' => ['required', 'string', 'min:6'],
+		]);
+
+		$email = strtolower(trim($data['email']));
+		$oldPassword = $data['oldPassword'];
+		$newPassword = $data['newPassword'];
+
+		// Find user by email (could be in User, Resident, or BarangayOfficer)
+		$user = User::whereRaw('LOWER(email) = ?', [$email])->first();
+		if (!$user) {
+			$user = Resident::whereRaw('LOWER(email) = ?', [$email])->first();
+		}
+		if (!$user) {
+			$user = BarangayOfficer::whereRaw('LOWER(email) = ?', [$email])->first();
+		}
+
+		if (!$user) {
+			return response()->json([
+				'success' => false,
+				'message' => 'Account not found'
+			], 404);
+		}
+
+		// Verify old password
+		if (!Hash::check($oldPassword, $user->password)) {
+			return response()->json([
+				'success' => false,
+				'message' => 'Current password is incorrect'
+			], 401);
+		}
+
+		// Update password
+		$user->password = Hash::make($newPassword);
+		$user->save();
+
+		// Clear any password reset tokens
+		DB::table('password_resets')->where('email', $email)->delete();
+
+		return response()->json([
+			'success' => true,
+			'message' => 'Password changed successfully'
+		], 200);
+	}
+
+	public function buildCertificatePdf(array $data): string
 	{
 		$name = trim((string) ($data['name'] ?? ''));
 		$age = trim((string) ($data['age'] ?? ''));

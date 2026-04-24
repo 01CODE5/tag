@@ -329,6 +329,7 @@
           <a href="./dashs"><span class="ico">🏠</span><span>Dashboard</span></a>
           <a class="active" href="./certificate"><span class="ico">📄</span><span>Certificate Template</span></a>
           <a href="./resident"><span class="ico">👥</span><span>Residents record</span></a>
+          <a href="./rest-acc"><span class="ico">🔐</span><span>Acc Resident</span></a>
         </nav>
         <div class="adm-sidebar-footer">
           <button class="adm-logout" type="button" id="adminLogout"><span class="ico">⎋</span><span>Logout</span></button>

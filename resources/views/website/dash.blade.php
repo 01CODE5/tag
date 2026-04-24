@@ -51,6 +51,7 @@
         <a class="active" href="./dashs"><span class="ico">🏠</span><span>Dashboard</span></a>
         <a href="./certificate"><span class="ico">📄</span><span>Certificate Template</span></a>
         <a href="./resident"><span class="ico">👥</span><span>Residents record</span></a>
+        <a href="./rest-acc"><span class="ico">🔐</span><span>Acc Resident</span></a>
       </nav>
 
       <div class="adm-sidebar-footer">
@@ -189,6 +190,23 @@
 
 <div id="notifToastHost" style="position:fixed;top:16px;right:16px;z-index:120;display:flex;flex-direction:column;gap:8px;pointer-events:none;"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+<!-- Email Success Modal -->
+<div id="emailSuccessModal" class="modal-overlay" hidden>
+  <div class="modal" style="max-width:400px;">
+    <button class="modal-close" id="emailSuccessClose">✕</button>
+    <div class="modal-header">
+      <h2>Email Sent</h2>
+    </div>
+    <div class="modal-body" style="text-align:center;">
+      <p>Your email has been sent successfully with the PDF attached.</p>
+      <button class="btn primary" id="emailSuccessOkBtn" style="margin-top:10px;">OK</button>
+    </div>
+  </div>
+</div>
+
   <script>
     const STORAGE_KEY = 'digibarangay_requests';
     const CERT_AUTOFILL_KEY = 'digibarangay_cert_autofill';
@@ -305,6 +323,127 @@
         return parsed ?? fallback;
       } catch {
         return fallback;
+      }
+    }
+
+    function buildCertificatePdfPayload(req) {
+      return {
+        ref: String(req?.ref || '').trim(),
+        name: String(req?.name || '').trim(),
+        age: req?.age ?? '',
+        address: String(req?.address || '').trim(),
+        purpose: String(req?.purpose || req?.purposeReason || '').trim(),
+        date: String(req?.dateRequested || req?.date || '').trim(),
+      };
+    }
+
+    async function generateRequestCertificatePdfBase64(req) {
+      if (!window.html2canvas || !window.jspdf || !window.jspdf.jsPDF) {
+        throw new Error('Certificate PDF libraries are not loaded.');
+      }
+
+      const payload = buildCertificatePdfPayload(req);
+      try {
+        sessionStorage.setItem(CERT_AUTOFILL_KEY, JSON.stringify(payload));
+        if (req && req.savedTemplate && typeof req.savedTemplate === 'object') {
+          sessionStorage.setItem(TEMPLATE_OVERRIDE_KEY, JSON.stringify(req.savedTemplate));
+        } else {
+          const globalTemplate = readGlobalClearanceTemplate();
+          if (globalTemplate && typeof globalTemplate === 'object') {
+            sessionStorage.setItem(TEMPLATE_OVERRIDE_KEY, JSON.stringify(globalTemplate));
+          } else {
+            sessionStorage.removeItem(TEMPLATE_OVERRIDE_KEY);
+          }
+        }
+      } catch (err) {
+        console.warn('Unable to store certificate preview data', err);
+      }
+
+      const sourceFrame = document.createElement('iframe');
+      sourceFrame.setAttribute('aria-hidden', 'true');
+      sourceFrame.style.position = 'fixed';
+      sourceFrame.style.left = '0';
+      sourceFrame.style.top = '0';
+      sourceFrame.style.opacity = '0';
+      sourceFrame.style.pointerEvents = 'none';
+      sourceFrame.style.zIndex = '-1';
+      sourceFrame.style.width = '794px';
+      sourceFrame.style.height = '1123px';
+      sourceFrame.style.border = '0';
+      sourceFrame.src = '/certificate?mode=docs&t=' + Date.now();
+      document.body.appendChild(sourceFrame);
+
+      try {
+        await new Promise((resolve, reject) => {
+          const failTimer = setTimeout(() => reject(new Error('Timed out loading certificate preview.')), 20000);
+          sourceFrame.onload = () => {
+            clearTimeout(failTimer);
+            resolve();
+          };
+          sourceFrame.onerror = () => {
+            clearTimeout(failTimer);
+            reject(new Error('Unable to load certificate preview.'));
+          };
+        });
+
+        const sourceDoc = sourceFrame.contentDocument;
+        const paper = sourceDoc && sourceDoc.getElementById('paper');
+        if (!sourceDoc || !paper) {
+          throw new Error('Certificate preview content not found.');
+        }
+
+        if (sourceDoc.fonts && sourceDoc.fonts.ready) {
+          try { await sourceDoc.fonts.ready; } catch (_) {}
+        }
+
+        const imageEls = Array.from(sourceDoc.images || []);
+        await Promise.all(imageEls.map((img) => {
+          if (img.complete) return Promise.resolve();
+          return new Promise((resolve) => {
+            img.addEventListener('load', resolve, { once: true });
+            img.addEventListener('error', resolve, { once: true });
+          });
+        }));
+
+        await new Promise((resolve) => setTimeout(resolve, 220));
+
+        const rect = paper.getBoundingClientRect();
+        const captureWidth = Math.max(
+          1,
+          Math.ceil(rect.width),
+          Math.ceil(paper.scrollWidth || 0),
+          Math.ceil(paper.offsetWidth || 0)
+        );
+        const captureHeight = Math.max(
+          1,
+          Math.ceil(rect.height),
+          Math.ceil(paper.scrollHeight || 0),
+          Math.ceil(paper.offsetHeight || 0)
+        );
+
+        const canvas = await window.html2canvas(paper, {
+          scale: 2.2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          width: captureWidth,
+          height: captureHeight,
+          windowWidth: Math.max(sourceDoc.documentElement.scrollWidth, captureWidth),
+          windowHeight: Math.max(sourceDoc.documentElement.scrollHeight, captureHeight),
+          scrollX: 0,
+          scrollY: 0,
+        });
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const imageData = canvas.toDataURL('image/png');
+        pdf.addImage(imageData, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
+
+        const dataUrl = pdf.output('datauristring');
+        return dataUrl.split(',')[1] || '';
+      } finally {
+        sourceFrame.remove();
       }
     }
 
@@ -575,6 +714,15 @@
 
       persistRequestEmail(ref, recipient);
 
+      let pdfAttachmentBase64 = '';
+      if (window.html2canvas && window.jspdf && window.jspdf.jsPDF) {
+        try {
+          pdfAttachmentBase64 = await generateRequestCertificatePdfBase64(req);
+        } catch (captureError) {
+          console.warn('Certificate design capture failed:', captureError);
+        }
+      }
+
       const payload = {
         recipient,
         subject: 'Barangay Request Update - ' + String(req.ref || '').trim(),
@@ -590,9 +738,15 @@
           + 'Barangay Admin',
         ref: String(req.ref || '').trim(),
         name: String(req.name || '').trim(),
+        age: String(req.age ?? '').trim(),
+        address: String(req.address || '').trim(),
         purpose: String(req.purpose || '').trim(),
         reason: String(req.purposeReason || '').trim(),
         date: String(req.dateRequested || req.date || '').trim(),
+        template: req.savedTemplate && typeof req.savedTemplate === 'object'
+          ? req.savedTemplate
+          : (readGlobalClearanceTemplate() || {}),
+        pdfAttachmentBase64: pdfAttachmentBase64 || undefined,
       };
 
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
@@ -615,12 +769,27 @@
         }
 
         closeEmailModal();
-        alert(data.message || 'Email sent successfully.');
+        showEmailSuccessModal();
       } catch (error) {
         console.error('Email send error:', error);
         alert(error.message || 'Unable to send email.');
       }
     }
+
+    function showEmailSuccessModal() {
+      const modal = document.getElementById('emailSuccessModal');
+      if (!modal) return;
+      modal.hidden = false;
+      modal.classList.add('open');
+    }
+    function closeEmailSuccessModal() {
+      const modal = document.getElementById('emailSuccessModal');
+      if (!modal) return;
+      modal.classList.remove('open');
+      modal.hidden = true;
+    }
+    document.getElementById('emailSuccessOkBtn')?.addEventListener('click', closeEmailSuccessModal);
+    document.getElementById('emailSuccessClose')?.addEventListener('click', closeEmailSuccessModal);
 
     if (emailCancelBtn) emailCancelBtn.addEventListener('click', closeEmailModal);
     if (emailCloseBtn) emailCloseBtn.addEventListener('click', closeEmailModal);
